@@ -41,6 +41,8 @@ params.dt = .008;
 params.timesteps = ceil(total_sim_time / params.dt);
 snapshots = params.timesteps / 100; % number of snapshotsof movement to take
 
+params.direction = struct('NORTH',1,'EAST',2,'SOUTH',3,'WEST',4,'UP',5,'DOWN',6);
+
 % obstable parameters
 params.obstacles.center = [200 400 500; 400 200 700; 500 700 400; 600 500 600; 800 350 300];
 params.obstacles.radii = [100; 50; 70; 40; 50];
@@ -104,18 +106,6 @@ params.discount_factor = .9;
 params.qlearning_r = 30;
 params.cl_weight = .8;
 
-% % Q learning simulation safespaces
-% % set up four, in the shape of a square
-% max_safe = 525;
-% min_safe = 275;
-% params.safespaces = [min_safe min_safe; min_safe max_safe; ...
-%     max_safe min_safe; max_safe max_safe];
-% % use to move predator towards center
-% % params.safe_center = [(min_safe + max_safe)/2 (min_safe + max_safe)/2];
-% 
-% for i = 1:size(params.safespaces)
-%     params.safegrids(i,:) = computeState(params.safespaces(i,:),params);
-% end
 
 %%%%% Q values
 use_stored_Q = true;
@@ -125,12 +115,16 @@ use_stored_Q = true;
 % Structure containing Sensor Network
 MSN.node = 1:params.maxnodes;
 MSN.neighbors = {};
-MSN.vel = zeros(params.timesteps,params.maxnodes,params.dimensions);
-MSN.accel = zeros(params.timesteps,params.maxnodes,params.dimensions);
-MSN.connectivity = zeros(params.timesteps,1);
+
+
 MSN.target_qmt = zeros(params.timesteps,params.dimensions);
 MSN.target_qmt(1,:) = params.target_origin;
 MSN.center_mass = zeros(params.timesteps,params.dimensions);
+
+% probably dont need these below but lets leave for now
+MSN.vel = zeros(params.timesteps,params.maxnodes,params.dimensions);
+MSN.accel = zeros(params.timesteps,params.maxnodes,params.dimensions);
+MSN.connectivity = zeros(params.timesteps,1);
 
 % set up Q
 if use_stored_Q == true && ...
