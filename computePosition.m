@@ -46,10 +46,11 @@ function [MSN,Q,Pred] = computePosition(MSN,Q,Pred,t,p)
 %         p.obstacles.radii(p.obstacles.number+1) = pred.prey_visibility;
 
         %call Qlearning to determine action
+        % expected return is MSN.action(t,all nodes)
         [MSN] = Qlearning(MSN,Q,t,p);
         % perform action
         [MSN] = doMovement(MSN,t,p);
-        % Compute new State based on taken action
+        % Compute new State based on taken action and new position
         [MSN] = getState(MSN,t,p,Pred);
         %Update Q-values
         [MSN,Q] = QUpdate(MSN,Q,t,p);
@@ -68,8 +69,9 @@ function MSN = doMovement(MSN,t,p)
     for node = 1:p.maxnodes
         % if Qlearning, then target gets set based on action
         if p.engage_Qlearning
-            %get action
-            %set target based on action
+            action = MSN.action(t,node);
+            %compute p.target_qmt;
+            MSN.target_qmt(t,:) = p.target_qmt;
         end
         
         %Actually compute movement
