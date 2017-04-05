@@ -1,25 +1,22 @@
 % Main function Project1A -- computes the next position, velocity, com and
 % connectivity of the MSN
-function [MSN,Q] = computePosition(MSN,Q,pred,t,p)
+function [MSN,Q,Pred] = computePosition(MSN,Q,Pred,t,p)
     prevt = t - 1;
 
-    % Compute target position for nodes
-    % will be overriden on a per node basis if a predator is detected
+    % Compute Target Position
     if p.algorithm > 1 && p.target_movement > 0
-        if p.target_movement == 1 % line
-            p.target_qmt(:,:) =  p.target_qmt(:,:) + (p.target_pmt(:,:) * p.dt);
-        elseif p.target_movement == 2 %sine
-            p.target_qmt(:,1) =  p.target_origin(:,1) + (.25 * t);
-            p.target_qmt(:,2) =  p.target_origin(:,2) - (100 * sin(.005*t));
-        elseif p.target_movement == 3 %circle
-            p.target_qmt(:,1) =  p.target_origin(:,1) - (p.circle_radius * cos(.005*t));
-            p.target_qmt(:,2) =  p.target_origin(:,2) + (p.circle_radius * sin(.005*t));
-            % amplitude * sin (frequency * t)
-            p.target_qmt(:,3) =  p.target_origin(:,3) - (200 * sin(.01*t));
-        end
+        p.target_qmt(:,1) =  p.target_origin(:,1) - (p.circle_radius * cos(.005*t));
+        p.target_qmt(:,2) =  p.target_origin(:,2) + (p.circle_radius * sin(.005*t));
+        % amplitude * sin (frequency * t)
+        p.target_qmt(:,3) =  p.target_origin(:,3) - (200 * sin(.01*t));
         MSN.target_qmt(t,:) = p.target_qmt;
     end
 
+    % Compute Predator Position            
+    Pred = computePredator(Pred,MSN,t,p);
+    
+    % Compute Node position
+    % 1) determine neighbors
     % for all nodes, get neighbors and check if a predator is around
     for node = 1:p.maxnodes
         currNode = [MSN.pos(prevt,node,1) MSN.pos(prevt,node,2) MSN.pos(prevt,node,3)];
@@ -30,9 +27,11 @@ function [MSN,Q] = computePosition(MSN,Q,pred,t,p)
         % once the first bird sees the predator Qlearning will remain engaged
         % Qlearning will be used to select action and then
         % action determines target, target determines movement
-        if p.engage_Qlearning == false && pred.active
-            if isPredatorDetected(currNode,pred.pos(prevt,:),pred.prey_visibility)
-                p.engage_Qlearning = true;
+        if p.engage_Qlearning == false && Pred.active
+            if isPredatorDetected(currNode,Pred.pos(prevt,:),Pred.prey_visibility)
+                % WAITING FOR QLEARNING TO BE CONNECTED - Currently never
+                % turn on
+                % p.engage_Qlearning = true;
             end
         end
     end
@@ -40,16 +39,18 @@ function [MSN,Q] = computePosition(MSN,Q,pred,t,p)
     % If a predator has been detected and Qlearning engaged, then use it to
     % move
     if p.engage_Qlearning 
-        %add obstacle to account for predator
-        p.obstacles.center(p.obstacles.number+1,:) = pred.pos(prevt,:);
-        p.obstacles.radii(p.obstacles.number+1) = pred.prey_visibility;
+        %DISCUSS: DOn't think we should make the predator an obstacle --
+        %let them figure it out
+%         %add obstacle to account for predator
+%         p.obstacles.center(p.obstacles.number+1,:) = pred.pos(prevt,:);
+%         p.obstacles.radii(p.obstacles.number+1) = pred.prey_visibility;
 
         %call Qlearning to determine action
         [MSN] = Qlearning(MSN,Q,t,p);
         % perform action
         [MSN] = doMovement(MSN,t,p);
         % Compute new State based on taken action
-        [MSN] = getState(MSN,t,p,pred);
+        [MSN] = getState(MSN,t,p,Pred);
         %Update Q-values
         [MSN,Q] = QUpdate(MSN,Q,t,p);
     % else continue moving using just the target

@@ -80,11 +80,11 @@ params.c1mt = 1.1;
 params.c2mt = 2 * sqrt(params.c1mt);
 
 %%%% PREDATOR
-P.pos = zeros(params.timesteps,params.dimensions);
-P.prey_visibility = 100;
-P.predator_visibility = 200;
-P.vel = 1;
-P.active = false;
+Pred.pos = zeros(params.timesteps,params.dimensions);
+Pred.prey_visibility = 100;
+Pred.predator_visibility = 200;
+Pred.vel = 3;
+Pred.active = true;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Q leanring world parameters
@@ -144,21 +144,26 @@ MSN = initializeMSN(MSN,params);
 %%% Main program
 episodes = 1;
 for e = 1:episodes
-    for i = 1:training_runs            
+    for i = 1:training_runs   
+        % Reset MSN
         MSN = initializeMSN(MSN,params);  
-        P.pos(1,:) = [800+randi(100,1) randi(800,1) 400];
-        P.outbound = false;
+        
+        %Reset Predator
+        Pred.pos(1,:) = [
+            randi(params.maxgrid) ...
+            randi(params.maxgrid) ...
+            randi(params.maxgrid)];
+        
+        % Reset Qlearning (wait til predator detected)
         params.engage_Qlearning = false;
 
         for t = 2:params.timesteps
             %Main function: recalc MSN next position
-            [MSN,Q] = computePosition(MSN,Q,P,t,params);
-            
-            %P = computePredator(P,MSN,t,params);
+            [MSN,Q,Pred] = computePosition(MSN,Q,Pred,t,params);
 
             % take a snapshot if needed
             if (mod((params.timesteps-t),floor(params.timesteps / snapshots)) == 0)
-                snapshot(MSN,P,e,i,t,params,h);
+                snapshot(MSN,Pred,e,i,t,params,h);
                 getframe();
             end
         end

@@ -1,29 +1,32 @@
-function P = computePredator(P,MSN,t,params)
+function Pred = computePredator(Pred,MSN,t,p)
 %move predator
-if isPreyDetected(MSN.center_mass(t,:),P.pos(t-1,:),P.predator_visibility)
-    pred_target = MSN.center_mass(t,:);
-else
-    distance = sqrt((P.pos(t-1,1) - params.safe_center(1))^2 + ...
-        (P.pos(t-1,2) - params.safe_center(2))^2);
-    if distance < 10
-        pred_target = [1200 randi(600,1)];
-        P.outbound = true;
-    elseif distance > 500 && P.outbound
-        pred_target = params.safe_center;
-        P.outbound = false;
-    elseif P.outbound
-        pred_target = [1200 randi(600,1)];
+    if isPreyDetected(MSN.center_mass(t-1,:),Pred.pos(t-1,:),Pred.predator_visibility)
+        pred_target = MSN.center_mass(t,:);
     else
-        pred_target = params.safe_center;
+        pred_target = [ ...
+            (p.maxgrid/4+randi(p.maxgrid/2)) ...
+            (p.maxgrid/4+randi(p.maxgrid/2)) ...
+            (p.maxgrid/4+randi(p.maxgrid/2))];
     end
-end
-P.pos(t,:) = P.pos(t-1,:) + computeMovement(P.pos(t-1,:),pred_target,P.vel,params.dt);
+    
+    delta_x = pred_target(1) - Pred.pos(t-1,1);
+    delta_y = pred_target(2) - Pred.pos(t-1,2);
+    delta_z = pred_target(3) - Pred.pos(t-1,3);
+    
+    %calculate angle in degrees
+    % Angle from the z-axis approach
+    z_theta = atan2d(delta_z,delta_x);
+    % Angle from the y-axis approach
+    y_theta = atan2d(delta_y,delta_x);
+    
+    Pred.pos(t,1) =  max(0,min(p.maxgrid,Pred.pos(t-1,1) + (Pred.vel * p.dt * delta_x)));
+    Pred.pos(t,2) =  max(0,min(p.maxgrid,Pred.pos(t-1,2) + (Pred.vel * p.dt * cos(y_theta) * delta_y)));
+    Pred.pos(t,3) =  max(0,min(p.maxgrid,Pred.pos(t-1,3) + (Pred.vel * p.dt * cos(z_theta) * delta_z)));
 return
 
 function prey = isPreyDetected(MSN_center,predpos,predvisibility)
 prey = false;
-distance = sqrt((predpos(1) - MSN_center(1))^2 + ...
-    (predpos(2) - MSN_center(2))^2);
+distance = norm(predpos-MSN_center,2);
 if distance < predvisibility
     prey = true;
 end

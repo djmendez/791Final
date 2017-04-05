@@ -18,6 +18,7 @@ return
 function pred_direction = directionPredator(predPos,nodePos,p)
     distance = norm(predPos - nodePos,2);
     if distance < p.r
+        delta_x = nodePos(1) - predPos(1);
         delta_y = nodePos(2) - predPos(2);
         delta_z = nodePos(3) - predPos(3);
 
