@@ -207,6 +207,5 @@ hold on
 axis ([0 params.timesteps 0 1]);
 plot(MSN.connectivity(2:end));
 hold off
-
-save('\\files\users\djmendez\Documents\CS791\Final\Q.mat','Q');
 %}
+save('\\files\users\djmendez\Documents\CS791\Final\Q.mat','Q');
