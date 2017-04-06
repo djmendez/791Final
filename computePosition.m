@@ -47,8 +47,11 @@ function [MSN,Q,Pred] = computePosition(MSN,Q,Pred,t,p)
 
         %call Qlearning to determine action
         % expected return is MSN.action(t,all nodes)
+        % will determine position at current time t based on 
+        % prev position at time t-1
+        % determine action for this time
         [MSN] = Qlearning(MSN,Q,t,p);
-        % perform action
+        % perform action and compute position for time t (based on t-1)
         [MSN] = doMovement(MSN,t,p);
         % Compute new State based on taken action and new position
         [MSN] = getState(MSN,t,p,Pred);
@@ -69,8 +72,8 @@ function MSN = doMovement(MSN,t,p)
     for node = 1:p.maxnodes
         % if Qlearning, then target gets set based on action
         if p.engage_Qlearning
-            action = MSN.action(t,node);
-            %compute p.target_qmt;
+            % action = MSN.action(t,node);
+            p.target_qmt = computeTarget(MSN,node,t,p);
             MSN.target_qmt(t,:) = p.target_qmt;
         end
         
@@ -88,10 +91,14 @@ function MSN = doMovement(MSN,t,p)
     end
 
     %make sure they dont swim through glass
-    % x = MSN.pos(t,:,:);
-    % x(x>p.maxgrid)=p.maxgrid-1;
-    % x(x<0)=1;
-    % MSN.pos(t,:,:) = x;
+%     x = MSN.pos(t,:,:);
+%     if size(x(x>p.maxgrid)) > 0 
+%         x(x>p.maxgrid) = p.maxgrid-1;
+%     end
+%     if size(x(x<0)) > 0 
+%         x(x<0)=1;
+%     end
+%     MSN.pos(t,:,:) = x;
 
     % Compute Center of mass
     MSN.center_mass(t,1) = mean(MSN.pos(t,:,1));
@@ -107,25 +114,21 @@ function predator = isPredatorDetected(node,predpos,pred_radius)
     end
 end
 
-
-%%%% OLD CODE JUST IN CASE
-%     % fly towards safe space
-%     if action < 5
-%         p.target_qmt = p.safespaces(action,:);
-%         MSN.accel(t,node,:) = ComputeNodeAccel(node,MSN.neighbors{node},MSN,p,t);
-%         % q(k) = qi(k-1) + Delta_t*p (k) + ((Delta_t)^2/2) *ui (k);
-%         MSN.pos(t,node,:) =  MSN.pos(prevt,node,:) + (MSN.vel(prevt,node,:) * p.dt) + (MSN.accel(t,node,:) * .5 * p.dt^2);
-%         % vel = pi(k) = (qi(k) - qi(k - 1)) / delta_t
-%         MSN.vel(t,node,:) = (MSN.pos(t,node,:) - MSN.pos(prevt,node,:)) / p.dt;
-%     else
-%         % target reached dont move
-%         % position doesnt change
-%         MSN.vel(t,node,:) = [0 0];
-%         MSN.pos(t,node,:) = MSN.pos(prevt,node,:);
-%         MSN.robots_at_target = MSN.robots_at_target + 1;
-%     end
-%     
-%     %cleanup by putting everything back to they way it was
-%     p.obstacles.center(end,:) = [];
-%     p.obstacles.radii(end)=[];
-% else
+function target = computeTarget(MSN,node,t,p)
+    action = MSN.action(t,node);
+    target = MSN.pos(t,node,:);
+    switch action
+        case p.direction.NORTH
+            target(2) = target(2) + p.target_distance;
+        case p.direction.EAST
+            target(1) = target(1) + p.target_distance;
+        case p.direction.SOUTH
+            target(2) = target(2) - p.target_distance;
+        case p.direction.WEST
+            target(1) = target(1) - p.target_distance;
+        case p.direction.UP
+            target(3) = target(3) + p.target_distance;
+        case p.direction.DOWN
+            target(3) = target(3) - p.target_distance;
+    end
+end

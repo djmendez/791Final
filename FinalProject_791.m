@@ -53,6 +53,7 @@ params.target_origin = [params.maxgrid/2 params.maxgrid/2 params.maxgrid/2];
 params.target_qmt = params.target_origin;
 params.target_pmt = [15 20 10];
 params.circle_radius = params.maxgrid *.35;
+params.target_distance = 100;
 
 %Movement algorithm parameters
 params.eps = .1;
