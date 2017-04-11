@@ -118,7 +118,7 @@ params.cl_weight = .8;
 % end
 
 %%%%% Q values
-use_stored_Q = true;
+use_stored_Q = false;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%% Set up data structures
@@ -137,7 +137,7 @@ if use_stored_Q == true && ...
     exist('\\files\users\djmendez\Documents\CS791\Final\Q.mat','file') == 2
     load('\\files\users\djmendez\Documents\CS791\Final\Q.mat');
 else
-    Q = zeros(params.maxnodes, params.num_states, params.num_states, params.num_actions);
+    Q = zeros(params.num_states, params.num_actions, params.maxnodes);
 end
 
 % display figure
