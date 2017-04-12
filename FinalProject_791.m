@@ -36,10 +36,12 @@ params.maxgrid = 1000;
 params.dimensions = 3;
 % range to see others
 params.d = 200;
+% max number of predators
+params.maxpred = 1;
 
 params.dt = .008;
 params.timesteps = ceil(total_sim_time / params.dt);
-snapshots = params.timesteps / 100; % number of snapshotsof movement to take
+snapshots = params.timesteps / 50;%100; % number of snapshotsof movement to take
 
 params.direction = struct('NORTH',1,'EAST',2,'SOUTH',3,'WEST',4,'UP',5,'DOWN',6);
 
@@ -91,7 +93,7 @@ Pred.active = true;
 % Q leanring world parameters
 params.gridsize = params.maxgrid / 40;
 
-params.num_states = params.maxgrid / params.gridsize;
+params.num_states = params.maxnodes + (params.maxnodes * (params.maxpred * 6));
 params.num_actions = 5;
 
 params.states = 1:params.num_states;

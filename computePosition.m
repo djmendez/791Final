@@ -50,7 +50,7 @@ function [MSN,Q,Pred] = computePosition(MSN,Q,Pred,t,p)
         % will determine position at current time t based on 
         % prev position at time t-1
         % determine action for this time
-        [MSN] = Qlearning(MSN,Q,t,p);
+        [MSN] = getAction(MSN,Q,t,p);
         % perform action and compute position for time t (based on t-1)
         [MSN] = doMovement(MSN,t,p);
         % Compute new State based on taken action and new position
