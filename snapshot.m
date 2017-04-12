@@ -103,16 +103,14 @@ end
 %draw predator if there is one
 if pred.active 
     phi = 0:.1:2.05*pi;
-    plot(pred.pos(max(2,t-500):t,1),pred.pos(max(2,t-500):t,2),'r');
-    plot(pred.pos(t,1),pred.pos(t,2),'*','MarkerFaceColor','r');
-    X = (pred.prey_visibility/2)*cos(phi); 
-    Y = (pred.prey_visibility/2)*sin(phi); 
-    plot((X*(p.r/10))+pred.pos(t,1),(Y*(p.r/10))+pred.pos(t,2),'r') 
-    X = (pred.predator_visibility/2)*cos(phi); 
-    Y = (pred.predator_visibility/2)*sin(phi); 
-    plot((X*(p.r/10))+pred.pos(t,1),(Y*(p.r/10))+pred.pos(t,2),'r') 
-%      plot(X+pred.pos(1),Y+pred.pos(2),'r') 
-%      fill(X+pred.pos(1),Y+pred.pos(2),'r')  
+%     plot3(pred.pos(max(2,t-200):t,1),pred.pos(max(2,t-200):t,2),pred.pos(max(2,t-200):t,3),'r');
+    plot3(pred.pos(t,1),pred.pos(t,2),pred.pos(t,3),'*','MarkerFaceColor','r');
+%     X = (pred.prey_visibility/2)*cos(phi); 
+%     Y = (pred.prey_visibility/2)*sin(phi); 
+%     plot((X*(p.r/10))+pred.pos(t,1),(Y*(p.r/10))+pred.pos(t,2),'r') 
+%     X = (pred.predator_visibility/2)*cos(phi); 
+%     Y = (pred.predator_visibility/2)*sin(phi); 
+%     plot((X*(p.r/10))+pred.pos(t,1),(Y*(p.r/10))+pred.pos(t,2),'r') 
 end
 
 hold off

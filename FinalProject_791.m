@@ -41,6 +41,8 @@ params.dt = .008;
 params.timesteps = ceil(total_sim_time / params.dt);
 snapshots = params.timesteps / 100; % number of snapshotsof movement to take
 
+params.direction = struct('NORTH',1,'EAST',2,'SOUTH',3,'WEST',4,'UP',5,'DOWN',6);
+
 % obstable parameters
 params.obstacles.center = [200 400 500; 400 200 700; 500 700 400; 600 500 600; 800 350 300];
 params.obstacles.radii = [100; 50; 70; 40; 50];
@@ -51,6 +53,7 @@ params.target_origin = [params.maxgrid/2 params.maxgrid/2 params.maxgrid/2];
 params.target_qmt = params.target_origin;
 params.target_pmt = [15 20 10];
 params.circle_radius = params.maxgrid *.35;
+params.target_distance = 100;
 
 %Movement algorithm parameters
 params.eps = .1;
@@ -78,11 +81,11 @@ params.c1mt = 1.1;
 params.c2mt = 2 * sqrt(params.c1mt);
 
 %%%% PREDATOR
-P.pos = zeros(params.timesteps,params.dimensions);
-P.prey_visibility = 100;
-P.predator_visibility = 200;
-P.vel = 1;
-P.active = false;
+Pred.pos = zeros(params.timesteps,params.dimensions);
+Pred.prey_visibility = 100;
+Pred.predator_visibility = 200;
+Pred.vel = 3;
+Pred.active = true;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Q leanring world parameters
@@ -104,18 +107,6 @@ params.discount_factor = .9;
 params.qlearning_r = 30;
 params.cl_weight = .8;
 
-% % Q learning simulation safespaces
-% % set up four, in the shape of a square
-% max_safe = 525;
-% min_safe = 275;
-% params.safespaces = [min_safe min_safe; min_safe max_safe; ...
-%     max_safe min_safe; max_safe max_safe];
-% % use to move predator towards center
-% % params.safe_center = [(min_safe + max_safe)/2 (min_safe + max_safe)/2];
-% 
-% for i = 1:size(params.safespaces)
-%     params.safegrids(i,:) = computeState(params.safespaces(i,:),params);
-% end
 
 %%%%% Q values
 use_stored_Q = false;
@@ -125,12 +116,16 @@ use_stored_Q = false;
 % Structure containing Sensor Network
 MSN.node = 1:params.maxnodes;
 MSN.neighbors = {};
-MSN.vel = zeros(params.timesteps,params.maxnodes,params.dimensions);
-MSN.accel = zeros(params.timesteps,params.maxnodes,params.dimensions);
-MSN.connectivity = zeros(params.timesteps,1);
+
+
 MSN.target_qmt = zeros(params.timesteps,params.dimensions);
 MSN.target_qmt(1,:) = params.target_origin;
 MSN.center_mass = zeros(params.timesteps,params.dimensions);
+
+% probably dont need these below but lets leave for now
+MSN.vel = zeros(params.timesteps,params.maxnodes,params.dimensions);
+MSN.accel = zeros(params.timesteps,params.maxnodes,params.dimensions);
+MSN.connectivity = zeros(params.timesteps,1);
 
 % set up Q
 if use_stored_Q == true && ...
@@ -150,21 +145,26 @@ MSN = initializeMSN(MSN,params);
 %%% Main program
 episodes = 1;
 for e = 1:episodes
-    for i = 1:training_runs            
+    for i = 1:training_runs   
+        % Reset MSN
         MSN = initializeMSN(MSN,params);  
-        P.pos(1,:) = [800+randi(100,1) randi(800,1) 400];
-        P.outbound = false;
+        
+        %Reset Predator
+        Pred.pos(1,:) = [
+            randi(params.maxgrid) ...
+            randi(params.maxgrid) ...
+            randi(params.maxgrid)];
+        
+        % Reset Qlearning (wait til predator detected)
         params.engage_Qlearning = false;
 
         for t = 2:params.timesteps
             %Main function: recalc MSN next position
-            [MSN,Q] = computePosition(MSN,Q,P,t,params);
-            
-            %P = computePredator(P,MSN,t,params);
+            [MSN,Q,Pred] = computePosition(MSN,Q,Pred,t,params);
 
             % take a snapshot if needed
             if (mod((params.timesteps-t),floor(params.timesteps / snapshots)) == 0)
-                snapshot(MSN,P,e,i,t,params,h);
+                snapshot(MSN,Pred,e,i,t,params,h);
                 getframe();
             end
         end
@@ -208,6 +208,5 @@ hold on
 axis ([0 params.timesteps 0 1]);
 plot(MSN.connectivity(2:end));
 hold off
-
-save('\\files\users\djmendez\Documents\CS791\Final\Q.mat','Q');
 %}
+save('\\files\users\djmendez\Documents\CS791\Final\Q.mat','Q');
