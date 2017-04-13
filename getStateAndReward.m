@@ -7,16 +7,19 @@ function MSN = getStateAndReward(MSN,t,p,pred)
         % Note here that predator_direction can be 0 if there is no predator
         % or none has been detected yet (i.e. outise radius of detection)
         predator_direction = directionPredator(pred.pos(t,:),currNode,p);
-        MSN.state(t,node,1) = number_neighbors;
+        % add one to count self as a nieghbor, makes indexing work later
+        fprintf('number of neighbors is %d', number_neighbors);
+        MSN.state(t,node,1) = number_neighbors + 1;
         %if Qlearning engaged (i.e. predator detected) 
         if p.engage_Qlearning
             MSN.state(t,node,2) = predator_direction;  
         end
         % Alternate reward approaches 
         % Approach 1: Note 20 is arbitrary weight
+        % going to try to keep this one simple with number of neighbors
         if p.reward == 1
-             MSN.reward(t,node) = (number_neighbors * 20) + ...
-                 (predator_direction * p.maxnodes);
+             MSN.reward(t,node) = number_neighbors; %(number_neighbors * 20) + ...
+                 %(predator_direction * p.maxnodes);
         % approach #2
         else 
             reward = 0;
