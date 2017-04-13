@@ -1,14 +1,38 @@
-function MSN = getState(MSN,t,p,pred) 
+function MSN = getStateAndReward(MSN,t,p,pred) 
 % states are a tuple combination of the number of neighbors and the
 % direction of the predator
     for node = 1:p.maxnodes
         currNode = [MSN.pos(t,node,1) MSN.pos(t,node,2) MSN.pos(t,node,3)];
         number_neighbors = size(MSN.neighbors{node},2);
-        predator_direction = directionPredator(pred.pos,currNode,p);
-        MSN.state(t,currNode,1) = number_neighbors;
+        % Note here that predator_direction can be 0 if there is no predator
+        % or none has been detected yet (i.e. outise radius of detection)
+        predator_direction = directionPredator(pred.pos(t,:),currNode,p);
+        MSN.state(t,node,1) = number_neighbors;
         %if Qlearning engaged (i.e. predator detected) 
         if p.engage_Qlearning
-            MSN.state(t,currNode,2) = predator_direction;  
+            MSN.state(t,node,2) = predator_direction;  
+        end
+        % Alternate reward approaches 
+        % Approach 1: Note 20 is arbitrary weight
+        if p.reward == 1
+             MSN.reward(t,node) = (number_neighbors * 20) + ...
+                 (predator_direction * p.maxnodes);
+        % approach #2
+        else 
+            reward = 0;
+            % if number of neighbors has been increased...
+            if (MSN.state(t-1,node,2) < number_neighbors)
+                reward = 10;
+            % or maintained
+            elseif (MSN.state(t-1,node,2) == number_neighbors)
+                reward = 5;
+            end
+            % if distance from predator has been increased
+            if (norm(pred.pos(t,:)-reshape(MSN.pos(t,node,:),1,p.dimensions)) > ...
+                    norm(pred.pos(t-1,:)-reshape(MSN.pos(t-1,node,:),1,p.dimensions)))
+                reward = reward + 10;
+            end
+            MSN.reward(t,node) = reward;
         end
     end
 return
@@ -17,6 +41,7 @@ return
 % direction it's coming from
 function pred_direction = directionPredator(predPos,nodePos,p)
     distance = norm(predPos - nodePos,2);
+    % if predator within detection radius
     if distance < p.r
         delta_x = nodePos(1) - predPos(1);
         delta_y = nodePos(2) - predPos(2);
@@ -41,6 +66,7 @@ function pred_direction = directionPredator(predPos,nodePos,p)
         else
             pred_direction = p.direction.NORTH;
         end
+    % if not within detection
     else
         pred_direction = 0;
     end

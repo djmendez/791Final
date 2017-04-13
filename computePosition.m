@@ -54,7 +54,7 @@ function [MSN,Q,Pred] = computePosition(MSN,Q,Pred,t,p)
         % perform action and compute position for time t (based on t-1)
         [MSN] = doMovement(MSN,t,p);
         % Compute new State based on taken action and new position
-        [MSN] = getState(MSN,t,p,Pred);
+        [MSN] = getStateAndReward(MSN,t,p,Pred);
         %Update Q-values
         [MSN,Q] = QUpdate(MSN,Q,t,p);
     % else continue moving using just the target
