@@ -142,6 +142,11 @@ end
 h = figure('Name','Simulation Window','units','normalized','position',[.1 .1 .7 .7]);
 
 MSN = initializeMSN(MSN,params);  
+%Prep for eventual movie
+movie_frames = snapshots; %set number of frames for the movie 
+mov(1:movie_frames) = struct('cdata', [],'colormap', []); % Preallocate movie structure.
+v = VideoWriter('\\files\users\djmendez\Documents\CS791\Final\flocking.mp4', 'MPEG-4');
+open(v);
 % snapshot(MSN,P,1,1,1,params,h);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -168,7 +173,8 @@ for e = 1:episodes
             % take a snapshot if needed
             if (mod((params.timesteps-t),floor(params.timesteps / snapshots)) == 0)
                 snapshot(MSN,Pred,e,i,t,params,h);
-                getframe();
+                frame = getframe();
+                writeVideo(v,frame);
             end
         end
     end
@@ -177,6 +183,7 @@ for e = 1:episodes
     %params.epsilon = params.epsilon * .95;
 end
 
+close(v);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%% PLOTS
 %%% Plot position of nodes over time
