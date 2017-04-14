@@ -13,7 +13,7 @@ function MSN = GetAction(MSN, Q, t, p)
         else
             % else get the max / most optimal action in the current state
             state = MSN.state(t-1,i,1) + (p.maxnodes * p.maxpred * MSN.state(t-1,i,2));
-            disp (state);
+            %disp (state);
             [~, MSN.action(t-1,i)] = max(Q(state,:,i));
         end
     end

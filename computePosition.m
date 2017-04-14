@@ -73,7 +73,7 @@ function MSN = doMovement(MSN,t,p)
     for node = 1:p.maxnodes
         % if Qlearning, then target gets set based on action
         if p.engage_Qlearning
-            % action = MSN.action(t,node);
+            %action = MSN.action(prevt,node);
             p.target_qmt = computeTarget(MSN,node,t,p);
             MSN.target_qmt(t,:) = p.target_qmt;
         end
@@ -116,8 +116,8 @@ function predator = isPredatorDetected(node,predpos,pred_radius)
 end
 
 function target = computeTarget(MSN,node,t,p)
-    action = MSN.action(t,node);
-    target = MSN.pos(t,node,:);
+    action = MSN.action(t-1,node);
+    target = reshape(MSN.pos(t-1,node,:),1,p.dimensions);
     switch action
         case p.direction.NORTH
             target(2) = target(2) + p.target_distance;
