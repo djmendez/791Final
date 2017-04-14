@@ -108,7 +108,7 @@ params.learning_rate = .2;
 params.discount_factor = .9;
 params.qlearning_r = 30;
 params.cl_weight = .8;
-params.reward = 2;
+params.reward = 1;
 
 
 %%%%% Q values

@@ -31,7 +31,8 @@ function [MSN,Q,Pred] = computePosition(MSN,Q,Pred,t,p)
             if isPredatorDetected(currNode,Pred.pos(prevt,:),Pred.prey_visibility)
                 % WAITING FOR QLEARNING TO BE CONNECTED - Currently never
                 % turn on
-                % p.engage_Qlearning = true;
+                p.engage_Qlearning = true;
+                [MSN] = getStateAndReward(MSN,t-1,p,Pred);
             end
         end
     end
@@ -50,13 +51,13 @@ function [MSN,Q,Pred] = computePosition(MSN,Q,Pred,t,p)
         % will determine position at current time t based on 
         % prev position at time t-1
         % determine action for this time
-        [MSN] = getAction(MSN,Q,t,p);
+        [MSN] = GetAction(MSN,Q,t,p);
         % perform action and compute position for time t (based on t-1)
         [MSN] = doMovement(MSN,t,p);
         % Compute new State based on taken action and new position
         [MSN] = getStateAndReward(MSN,t,p,Pred);
         %Update Q-values
-        [MSN,Q] = QUpdate(MSN,Q,t,p);
+        [Q] = QUpdate(MSN,Q,t,p);
     % else continue moving using just the target
     else
         MSN = doMovement(MSN,t,p);
