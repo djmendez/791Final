@@ -92,7 +92,7 @@ end
 
 
 %draw target if there is a moving target
-if p.target_movement > 0
+if ~p.enable_Qlearning && p.target_movement > 0
     scatter3(MSN.target_qmt(t,1),MSN.target_qmt(t,2),MSN.target_qmt(t,3),50,'filled','o','MarkerFaceColor','blue')
     plot3(MSN.target_qmt(max(2,t-200):t,1),...
             MSN.target_qmt(max(2,t-200):t,2), ...
@@ -104,7 +104,7 @@ end
 if pred.active 
     phi = 0:.1:2.05*pi;
 %     plot3(pred.pos(max(2,t-200):t,1),pred.pos(max(2,t-200):t,2),pred.pos(max(2,t-200):t,3),'r');
-    plot3(pred.pos(t,1),pred.pos(t,2),pred.pos(t,3),'*','MarkerFaceColor','r');
+    plot3(pred.pos(t,1),pred.pos(t,2),pred.pos(t,3),'*','MarkerFaceColor','red');
 %     X = (pred.prey_visibility/2)*cos(phi); 
 %     Y = (pred.prey_visibility/2)*sin(phi); 
 %     plot((X*(p.r/10))+pred.pos(t,1),(Y*(p.r/10))+pred.pos(t,2),'r') 

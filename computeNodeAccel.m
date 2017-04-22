@@ -29,7 +29,7 @@ function u = computeNodeAccel(node,neighbors,MSN,p,t)
     if p.algorithm == 3        
         u = u + algorithm3(qi,pi,p);
     end
-return
+end
 
 function u = algorithm1(qi,qj,pi,pj,p)
     % compute position difference vector
@@ -52,7 +52,7 @@ function u = algorithm1(qi,qj,pi,pj,p)
         
     % algorithm1
     u =  (p.c1 * phi_alpha_ji * nij) + (p.c2 * aij_q * p_ji);
-return
+end
 
 function u = algorithm2(qi,pi,p)
     if (p.target_pmt == 0)
@@ -60,46 +60,119 @@ function u = algorithm2(qi,pi,p)
     else
         u = -1 * (p.c1mt * (qi - p.target_qmt) + p.c2mt * (pi - p.target_pmt));
     end
-return
+end
 
 function u = algorithm3(qi,pi,p)
-
     u = [0 0 0];
-    I = [1 0 0; 0 1 0; 0 0 1];
-
     for obstacle = 1:p.obstacles.number;
         obstacle_center = p.obstacles.center(obstacle,:);
         obstacle_radius = p.obstacles.radii(obstacle);
         %distance = sqrt((qi(1) - obstacle_center(1))^2 + (qi(2) - obstacle_center(2))^2);
         distance = norm(qi - obstacle_center,2);
         if distance < obstacle_radius + p.r
-            mu = obstacle_radius / distance;
-            ak = (qi - obstacle_center) / obstacle_radius;
-            P = I - (ak*transpose(ak));
-
-            q_hat_ik = (mu * qi) + ((1 - mu) * obstacle_center);   
-            p_hat_ik = transpose(mu * P * transpose(pi)); 
-
-            q_ki = q_hat_ik - qi;
-            p_ki = p_hat_ik - pi;
-            
-            % compute sigmaNorm of relative positions
-            sn_ki = sigmaNorm(q_hat_ik,qi,p.eps);
-            
-            %Compute phi_alpha_ji
-            phi_beta_ki = phiBeta(sn_ki,p);
-
-            %compute nik vector
-            %distance_ik = sqrt((q_hat_ik(1) - qi(1))^2 + (q_hat_ik(2) - qi(2))^2);
-            distance_ik = norm(q_hat_ik - qi,2);
-            
-            nik = q_ki / (sqrt (1 + p.eps * distance_ik^2));
-        
-            %compute aij
-            bik_q = rho(sn_ki/p.d_beta,p.h_beta);
-
-            % basically algorithm1 with beta functions
-            u =  (p.c1_beta * phi_beta_ki * nik) + (p.c2_beta * bik_q * p_ki);
+            u = computeSphereBeta(obstacle_center,obstacle_radius,distance,qi,pi,p);
         end
     end
-return
+%    if u == [0 0 0]
+%     wall_radius = 50;
+
+
+%     if q1(1) - wall_radius < 0 
+%       obstacle_center = [0 qi(2) qi(3)];
+%        distance = q1(1);
+%       
+%         u = u + computeWallBeta(obstacle_center,wall_radius,distance,qi,pi,p);
+%     elseif q1(1) + wall_radius > 1000
+%       obstacle_center = [1000 qi(2) qi(3)];
+%        distance = 1000 - q1(1);
+%         u = u + computeWallBeta(obstacle_center,wall_radius,distance,qi,pi,p);
+%     end
+%     
+%     if qi(2) - wall_radius < 0
+%         obstacle_center = [qi(1) 0 qi(3)];
+%         distance = norm(qi - obstacle_center,2);
+%         u = u + computeWallBeta(obstacle_center,wall_radius,distance,qi,pi,p);
+%     elseif qi(2) + wall_radius > 1000
+%         obstacle_center = [qi(1) 1000 qi(3)];
+%         distance = norm(qi - obstacle_center,2);
+%         u = u + computeWallBeta(obstacle_center,wall_radius,distance,qi,pi,p);
+%     end
+%     
+%     if qi(3) - wall_radius < 0
+%         obstacle_center = [qi(1) qi(2) 0];
+%         distance = norm(qi - obstacle_center,2);
+%         u = u + computeWallBeta(obstacle_center,wall_radius,distance,qi,pi,p);
+%     elseif qi(3) + wall_radius > 1000
+%         obstacle_center = [qi(1) qi(2) 1000];
+%         distance = norm(qi - obstacle_center,2);
+%         u = u + computeWallBeta(obstacle_center,wall_radius,distance,qi,pi,p);
+%     end
+    
+end
+
+function u = computeSphereBeta(obstacle_center,obstacle_radius,distance,qi,pi,p)
+
+    u = [0 0 0];
+    I = [1 0 0; 0 1 0; 0 0 1];
+    
+    mu = obstacle_radius / distance;
+    ak = (qi - obstacle_center) / obstacle_radius;
+    P = I - (ak*transpose(ak));
+    
+    q_hat_ik = (mu * qi) + ((1 - mu) * obstacle_center);
+    p_hat_ik = transpose(mu * P * transpose(pi));
+    
+    q_ki = q_hat_ik - qi;
+    p_ki = p_hat_ik - pi;
+    
+    % compute sigmaNorm of relative positions
+    sn_ki = sigmaNorm(q_hat_ik,qi,p.eps);
+    
+    %Compute phi_alpha_ji
+    phi_beta_ki = phiBeta(sn_ki,p);
+    
+    %compute nik vector
+    %distance_ik = sqrt((q_hat_ik(1) - qi(1))^2 + (q_hat_ik(2) - qi(2))^2);
+    distance_ik = norm(q_hat_ik - qi,2);
+    
+    nik = q_ki / (sqrt (1 + p.eps * distance_ik^2));
+    
+    %compute aij
+    bik_q = rho(sn_ki/p.d_beta,p.h_beta);
+    
+    % basically algorithm1 with beta functions
+    u =  (p.c1_beta * phi_beta_ki * nik) + (p.c2_beta * bik_q * p_ki);
+end
+
+function u = computeWallBeta(obstacle_center,obstacle_radius,distance,qi,pi,p)
+
+    u = [0 0 0];
+    I = [1 0 0; 0 1 0; 0 0 1];
+    
+    ak = obstacle_center;
+    P = I - (ak*transpose(ak));
+    
+    q_hat_ik = P * qi + (I - P) * y_k;
+    p_hat_ik = P * transpose(pi);
+    
+    q_ki = q_hat_ik - qi;
+    p_ki = p_hat_ik - pi;
+    
+    % compute sigmaNorm of relative positions
+    sn_ki = sigmaNorm(q_hat_ik,qi,p.eps);
+    
+    %Compute phi_alpha_ji
+    phi_beta_ki = phiBeta(sn_ki,p);
+    
+    %compute nik vector
+    %distance_ik = sqrt((q_hat_ik(1) - qi(1))^2 + (q_hat_ik(2) - qi(2))^2);
+    distance_ik = norm(q_hat_ik - qi,2);
+    
+    nik = q_ki / (sqrt (1 + p.eps * distance_ik^2));
+    
+    %compute aij
+    bik_q = rho(sn_ki/p.d_beta,p.h_beta);
+    
+    % basically algorithm1 with beta functions
+    u =  (p.c1_beta * phi_beta_ki * nik) + (p.c2_beta * bik_q * p_ki);
+end

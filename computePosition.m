@@ -27,7 +27,7 @@ function [MSN,Q,Pred] = computePosition(MSN,Q,Pred,t,p)
         % once the first bird sees the predator Qlearning will remain engaged
         % Qlearning will be used to select action and then
         % action determines target, target determines movement
-        if p.engage_Qlearning == false && Pred.active
+        if p.enable_Qlearning && ~p.engage_Qlearning && Pred.active
             if isPredatorDetected(currNode,Pred.pos(prevt,:),Pred.prey_visibility)
                 % WAITING FOR QLEARNING TO BE CONNECTED - Currently never
                 % turn on
@@ -88,18 +88,16 @@ function MSN = doMovement(MSN,t,p)
         %q(k) = qi(k-1) + Delta_t*p (k) + ((Delta_t)^2/2) *ui (k);
         MSN.pos(t,node,:) =  MSN.pos(prevt,node,:) + (MSN.vel(prevt,node,:) * p.dt) + (MSN.accel(t,node,:) * .5 * p.dt^2);
         %vel = pi(k) = (qi(k) - qi(k - 1)) / delta_t
+        
+        %make sure they havent swum through glass
+        temp_x = MSN.pos(t,node,:);
+        temp_x(temp_x>p.maxgrid) = p.maxgrid - 25;
+        temp_x(temp_x<0) = 25;
+        MSN.pos(t,node,:) = temp_x;
+        
+        % compute velocity given new position
         MSN.vel(t,node,:) = (MSN.pos(t,node,:) - MSN.pos(prevt,node,:)) / p.dt;
     end
-
-    %make sure they dont swim through glass
-%     x = MSN.pos(t,:,:);
-%     if size(x(x>p.maxgrid)) > 0 
-%         x(x>p.maxgrid) = p.maxgrid-1;
-%     end
-%     if size(x(x<0)) > 0 
-%         x(x<0)=1;
-%     end
-%     MSN.pos(t,:,:) = x;
 
     % Compute Center of mass
     MSN.center_mass(t,1) = mean(MSN.pos(t,:,1));

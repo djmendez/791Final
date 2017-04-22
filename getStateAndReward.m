@@ -8,7 +8,7 @@ function MSN = getStateAndReward(MSN,t,p,pred)
         % or none has been detected yet (i.e. outise radius of detection)
         predator_direction = directionPredator(pred.pos(t,:),currNode,p);
         % add one to count self as a nieghbor, makes indexing work later
-        fprintf('number of neighbors is %d', number_neighbors);
+        %fprintf('number of neighbors is %d', number_neighbors);
         MSN.state(t,node,1) = number_neighbors + 1;
         %if Qlearning engaged (i.e. predator detected) 
         if p.engage_Qlearning
