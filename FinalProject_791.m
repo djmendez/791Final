@@ -4,12 +4,12 @@ close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%% INPUT PARAMETERS
 %%%%%%%%%%%%%%%%%%%%%%%%% Frequently changed
-total_sim_time = 20;        % total simulation time
+total_sim_time = 5;        % total simulation time
 params.algorithm = 3;       % Alg1 - plain, Alg2 - attractor target, Alg3 - obstacle avoidance
 params.target_movement = 3; % proper values are 0 (static), 1 (line), 2 (sin) 3 (circle) 
 % Note that target_movement is only applicable for alg > 1
-episodes = 5;
-training_runs = 1; 
+episodes = 2;
+training_runs = 2; 
 
 params.publish = false; % true for final results to get different figures
 
@@ -18,7 +18,7 @@ if params.publish
     % will set number of snapshots to 6 to add to paper report
     % will also set
     episodes = 1;
-    training_runs = 1;
+    training_runs = 5;
     % velocity should not drop below 40 without increasing granularity (i.e.
     % number of grids) and retraining. Q matrix provided (training with 160
     % 20x20 grids has been trained for at least that velocity)
@@ -56,7 +56,7 @@ params.circle_radius = params.maxgrid *.35;
 params.target_distance = 100;
 
 %Movement algorithm parameters
-params.eps = .1;
+params.eps = .3;
 params.k = 1.2;
 
 params.r = params.k * params.d;
@@ -100,7 +100,7 @@ params.max_distance = params.safe_circle_radius * params.num_states;
 params.actions = 1:params.num_actions;
 
 %Q learning algorithm parameters
-params.enable_Qlearning = 0;
+params.enable_Qlearning = 1;
 params.q_learning_algorithm = 1;
 params.epsilon = .5;
 params.learning_rate = .2;
@@ -149,7 +149,6 @@ open(v);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Main program
-episodes = 1;
 for e = 1:episodes
     for i = 1:training_runs   
         % Reset MSN

@@ -17,25 +17,25 @@ function MSN = getStateAndReward(MSN,t,p,pred)
         % Alternate reward approaches 
         % Approach 1: Note 20 is arbitrary weight
         % going to try to keep this one simple with number of neighbors
-        if p.reward == 1
-             MSN.reward(t,node) = number_neighbors; %(number_neighbors * 20) + ...
-                 %(predator_direction * p.maxnodes);
+        reward1 = 0;
+        reward2 = 0;
+        
+        if p.reward == 1 || p.reward == 3
+             reward1 = number_neighbors;     
+             MSN.reward(t,node) = reward1;
+        end
         % approach #2
-        else 
-            reward = 0;
-            % if number of neighbors has been increased...
-            if (MSN.state(t-1,node,2) < number_neighbors)
-                reward = 10;
-            % or maintained
-            elseif (MSN.state(t-1,node,2) == number_neighbors)
-                reward = 5;
-            end
-            % if distance from predator has been increased
+        
+        if p.reward > 1
             if (norm(pred.pos(t,:)-reshape(MSN.pos(t,node,:),1,p.dimensions)) > ...
                     norm(pred.pos(t-1,:)-reshape(MSN.pos(t-1,node,:),1,p.dimensions)))
-                reward = reward + 10;
+                reward2 = 5;
+                MSN.reward(t,node) = reward2;
             end
-            MSN.reward(t,node) = reward;
+        end
+            
+        if p.reward == 3
+             MSN.reward(t_node) = reward1 + reward2;
         end
     end
 return
