@@ -3,8 +3,8 @@ function Q = QUpdate(MSN, Q, t, p)
     % for each robot's Q matrix update current state action pair
     for i = 1:p.maxnodes
         % variables for clarity
-        current_state = MSN.state(t-1,i,1) + (p.maxnodes * p.maxpred * MSN.state(t-1,i,2));
-        next_state = MSN.state(t,i,1) + (p.maxnodes * p.maxpred * MSN.state(t,i,2));
+        current_state = MSN.state(t-1,i,1) + (p.maxnodes * MSN.state(t-1,i,2));
+        next_state = MSN.state(t,i,1) + (p.maxnodes * MSN.state(t,i,2));
         [~, max_next_action] = max(Q(next_state, :, i));
         Q_state_action = Q(current_state, MSN.action(t-1, i), i);
         

@@ -36,8 +36,6 @@ params.maxgrid = 1000;
 params.dimensions = 3;
 % range to see others
 params.d = 200;
-% max number of predators
-params.maxpred = 1;
 
 params.dt = .008;
 params.timesteps = ceil(total_sim_time / params.dt);
