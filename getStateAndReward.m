@@ -9,18 +9,20 @@ function MSN = getStateAndReward(MSN,t,p,pred)
         % Note here that predator_direction can be 0 if there is no predator
         % or none has been detected yet (i.e. outise radius of detection)
         predator_direction = 0;        
-        distance = norm(pred.pos(t,:) - currNode,2);
+        distance = sqrt((pred.pos(t,1) - currNode(1))^2 + ...
+            (pred.pos(t,2) - currNode(2))^2 + ...
+            (pred.pos(t,3) - currNode(3))^2);
         % if predator within detection radius
         if distance < p.r
             predator_direction = directionPredator(pred.pos(t,:),currNode,p);
         end
-        MSN.Report.Pred_distance(MSN.current_run,t,node) = distance;
+        MSN.Report_Pred_distance(MSN.current_run,t,node) = distance;
         
         % add one to count self as a neighbor, makes indexing work later
         MSN.state(t,node,1) = number_neighbors + 1;
         %if Qlearning engaged (i.e. predator detected) 
 %        if p.engage_Qlearning
-            MSN.state(t,node,2) = predator_direction;  
+        MSN.state(t,node,2) = predator_direction;
 %        end
         % Alternate reward approaches 
         reward1 = 0;

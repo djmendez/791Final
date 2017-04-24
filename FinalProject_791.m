@@ -129,10 +129,10 @@ use_stored_Q = false;
 %%%% Data capture for final reporting
 %%% reward: per training run, per timestep
 %%% capture the mean network reward
-MSN.Report.Reward = zeros(episodes*training_runs,params.timesteps);
-MSN.Report.NN = zeros(episodes*training_runs,params.timesteps);
-MSN.Report.Pred_distance = zeros(episodes*training_runs,params.timesteps,params.maxnodes);
-MSN.Report.Mean_pred_distance = zeros(episodes*training_runs,params.timesteps);
+MSN.Report_Reward = zeros(episodes*training_runs,params.timesteps);
+MSN.Report_NN = zeros(episodes*training_runs,params.timesteps);
+MSN.Report_Pred_distance = zeros(episodes*training_runs,params.timesteps,params.maxnodes);
+MSN.Report_Mean_pred_distance = zeros(episodes*training_runs,params.timesteps);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%% Set up data structures
@@ -201,10 +201,10 @@ for e = 1:episodes
             end
             
             % record reward
-            MSN.Report.Reward(MSN.current_run,t) = mean(MSN.reward(t,:));
-            MSN.Report.NN(MSN.current_run,t) = mean(cellfun(@(x) numel(x),MSN.neighbors));          
-            MSN.Report.Mean_pred_distance(MSN.current_run,t) = ...
-                mean(MSN.Report.Pred_distance(MSN.current_run,t,:));
+            MSN.Report_Reward(MSN.current_run,t) = mean(MSN.reward(t,:));
+            MSN.Report_NN(MSN.current_run,t) = mean(cellfun(@(x) numel(x),MSN.neighbors));          
+            MSN.Report_Mean_pred_distance(MSN.current_run,t) = ...
+                mean(MSN.Report_Pred_distance(MSN.current_run,t,:));
         end
         MSN.current_run = MSN.current_run + 1;
     end
@@ -221,21 +221,21 @@ end
 figure('Name','Reward');
 hold on
 for run = 1:MSN.current_run-1
-    plot(MSN.Report.Reward(run,2:end))
+    plot(MSN.Report_Reward(run,2:end))
 end
 hold off
 
 figure('Name','Number of Neighbors');
 hold on
 for run = 1:MSN.current_run-1
-    plot(MSN.Report.NN(run,2:end))
+    plot(MSN.Report_NN(run,2:end))
 end
 hold off
 
 figure('Name','Mean Predator Distance');
 hold on
 for run = 1:MSN.current_run-1
-    plot(MSN.Report.Mean_pred_distance(run,2:end))
+    plot(MSN.Report_Mean_pred_distance(run,2:end))
 end
 hold off
 
