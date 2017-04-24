@@ -9,7 +9,7 @@ function [MSN,Q,Pred] = computePosition(MSN,Q,Pred,t,p)
         p.target_qmt(:,2) =  p.target_origin(:,2) + (p.circle_radius * sin(.005*t));
         % amplitude * sin (frequency * t)
         p.target_qmt(:,3) =  p.target_origin(:,3) - (200 * sin(.01*t));
-        MSN.target_qmt(t,:) = p.target_qmt;
+        %MSN.target_qmt(t,:) = p.target_qmt;
     end
 
     % Compute Predator Position            
@@ -22,24 +22,26 @@ function [MSN,Q,Pred] = computePosition(MSN,Q,Pred,t,p)
         currNode = [MSN.pos(prevt,node,1) MSN.pos(prevt,node,2) MSN.pos(prevt,node,3)];
         %get neighbors
         [MSN.neighbors{node}] = computeNeighbors(node,currNode,prevt,MSN,p);
-
+%%%%%% NIKI -- IS THIS RIGHT? We are setting the reward in this call before
+%%%%%% we do action?
+        [MSN] = getStateAndReward(MSN,t-1,p,Pred);
         % if predator is visible then do qlearning
         % once the first bird sees the predator Qlearning will remain engaged
         % Qlearning will be used to select action and then
         % action determines target, target determines movement
-        if p.enable_Qlearning && ~p.engage_Qlearning && Pred.active
-            if isPredatorDetected(currNode,Pred.pos(prevt,:),Pred.prey_visibility)
-                % WAITING FOR QLEARNING TO BE CONNECTED - Currently never
-                % turn on
-                p.engage_Qlearning = true;
-                [MSN] = getStateAndReward(MSN,t-1,p,Pred);
-            end
-        end
+%         if p.enable_Qlearning && ~p.engage_Qlearning && Pred.active
+%             if isPredatorDetected(currNode,Pred.pos(prevt,:),Pred.prey_visibility)
+%                 % WAITING FOR QLEARNING TO BE CONNECTED - Currently never
+%                 % turn on
+%                 p.engage_Qlearning = true;
+%                 [MSN] = getStateAndReward(MSN,t-1,p,Pred);
+%             end
+ %       end
     end
 
     % If a predator has been detected and Qlearning engaged, then use it to
     % move
-    if p.engage_Qlearning 
+    if p.enable_Qlearning
         %DISCUSS: DOn't think we should make the predator an obstacle --
         %let them figure it out
 %         %add obstacle to account for predator
@@ -72,10 +74,10 @@ function MSN = doMovement(MSN,t,p)
 
     for node = 1:p.maxnodes
         % if Qlearning, then target gets set based on action
-        if p.engage_Qlearning
+        if p.enable_Qlearning
             %action = MSN.action(prevt,node);
-            p.target_qmt = computeTarget(MSN,node,t,p);
-            MSN.target_qmt(t,:) = p.target_qmt;
+            [p.target_qmt,p.target_pmt] = computeTarget(MSN,node,t,p);
+            %MSN.target_qmt(t,:) = p.target_qmt;
         end
         
         %Actually compute movement
@@ -99,35 +101,39 @@ function MSN = doMovement(MSN,t,p)
         MSN.vel(t,node,:) = (MSN.pos(t,node,:) - MSN.pos(prevt,node,:)) / p.dt;
     end
 
-    % Compute Center of mass
-    MSN.center_mass(t,1) = mean(MSN.pos(t,:,1));
-    MSN.center_mass(t,2) = mean(MSN.pos(t,:,2));
-    MSN.center_mass(t,3) = mean(MSN.pos(t,:,3));
+
 end
 
-function predator = isPredatorDetected(node,predpos,pred_radius)
-    predator = false;
-    distance = sqrt((node(1) - predpos(1))^2 + (node(2) - predpos(2))^2);
-    if distance < pred_radius
-        predator = true;
-    end
-end
+% function predator = isPredatorDetected(node,predpos,pred_radius)
+%     predator = false;
+%     distance = sqrt((node(1) - predpos(1))^2 + (node(2) - predpos(2))^2);
+%     if distance < pred_radius
+%         predator = true;
+%     end
+% end
 
-function target = computeTarget(MSN,node,t,p)
+function [target,target_velocity] = computeTarget(MSN,node,t,p)
     action = MSN.action(t-1,node);
+    target_velocity = [0 0 0];
     target = reshape(MSN.pos(t-1,node,:),1,p.dimensions);
     switch action
         case p.direction.NORTH
             target(2) = target(2) + p.target_distance;
+            target_velocity(2) = p.target_velocity;
         case p.direction.EAST
             target(1) = target(1) + p.target_distance;
+            target_velocity(1) = p.target_velocity;        
         case p.direction.SOUTH
             target(2) = target(2) - p.target_distance;
+            target_velocity(2) = -p.target_velocity;      
         case p.direction.WEST
             target(1) = target(1) - p.target_distance;
+            target_velocity(1) = -p.target_velocity;          
         case p.direction.UP
             target(3) = target(3) + p.target_distance;
+            target_velocity(3) = p.target_velocity;          
         case p.direction.DOWN
             target(3) = target(3) - p.target_distance;
+            target_velocity(3) = -p.target_velocity;            
     end
 end

@@ -1,6 +1,6 @@
 function snapshot(MSN,pred,e,i,t,p,h)
 
-if p.publish
+if p.training
     figure('Name','Simulation Window','units','normalized','position',[.1 .1 .7 .7]);
 else
     figure(h);

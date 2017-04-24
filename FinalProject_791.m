@@ -4,56 +4,67 @@ close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%% INPUT PARAMETERS
 %%%%%%%%%%%%%%%%%%%%%%%%% Frequently changed
-total_sim_time = 5;        % total simulation time
-params.algorithm = 3;       % Alg1 - plain, Alg2 - attractor target, Alg3 - obstacle avoidance
-params.target_movement = 3; % proper values are 0 (static), 1 (line), 2 (sin) 3 (circle) 
-% Note that target_movement is only applicable for alg > 1
-episodes = 2;
-training_runs = 2; 
+% Reward type: 
+% (1) Straigh Number neighbors 
+% (2) Distance to Predator 
+% (3) Combo
+params.reward = 1;
 
-params.publish = false; % true for final results to get different figures
+% enable for training runs (disables graphics)
+params.training = true;
 
-if params.publish
-    % will set origin to a fixed point so as to compare apples to apples
-    % will set number of snapshots to 6 to add to paper report
-    % will also set
-    episodes = 1;
+% total fish
+params.maxnodes = 30; 
+
+% set running parameters depending on whether training or display
+if params.training
+    episodes = 2;
     training_runs = 5;
-    % velocity should not drop below 40 without increasing granularity (i.e.
-    % number of grids) and retraining. Q matrix provided (training with 160
-    % 20x20 grids has been trained for at least that velocity)
-    params.vel = 50;
+    total_sim_time = 10;        % total simulation time
+    snapshot_frequency = 100;    % fewer snapshots -- although turning off altogether
+else
+    episodes = 1;
+    training_runs = 2;
+    total_sim_time = 5;         % total simulation time
+    snapshot_frequency = 50;     % lower number so it looks more smooth
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%% Other key world parameters
+% Flocking parameters - should not change anymore
+params.algorithm = 3;       % Alg1 - plain, Alg2 - attractor target, Alg3 - obstacle avoidance
+params.target_movement = 3; % proper values are 0 (static), 1 (line), 2 (sin) 3 (circle) 
+% Note that target_movement is only applicable for alg > 1
 
-%%%%%%%%% World definition parameters
-params.maxnodes = 30; 
-%%%%%%%%% Other key world parameters
 params.maxgrid = 1000;
 %params.graphsize = 100;
 params.dimensions = 3;
 % range to see others
 params.d = 200;
 
+% snapshots
 params.dt = .008;
 params.timesteps = ceil(total_sim_time / params.dt);
-snapshots = params.timesteps / 50;%100; % number of snapshotsof movement to take
+snapshots = params.timesteps / snapshot_frequency; 
 
 params.direction = struct('NORTH',1,'EAST',2,'SOUTH',3,'WEST',4,'UP',5,'DOWN',6);
 
-% obstable parameters
+%%%%%%%%%%%%%%% Obstable parameters
 params.obstacles.center = [200 400 500; 400 200 700; 500 700 400; 600 500 600; 800 350 300];
 params.obstacles.radii = [100; 50; 70; 40; 50];
 params.obstacles.number = size(params.obstacles.center,1);
 
 %%%%%%%%%%%%%%% Movement parameters
 params.target_origin = [params.maxgrid/2 params.maxgrid/2 params.maxgrid/2];
+
+params.circle_radius = params.maxgrid *.35;
+%target position and velocity *for when no predator is used*
 params.target_qmt = params.target_origin;
 params.target_pmt = [15 20 10];
-params.circle_radius = params.maxgrid *.35;
-params.target_distance = 100;
+% when using predator/qlearning, below controls how far is the target for
+% an action and the speed the fish move to get there
+params.target_distance = 200;
+params.target_velocity = 20;
 
 %Movement algorithm parameters
 params.eps = .3;
@@ -77,18 +88,21 @@ params.c1 = 30;
 params.c2 = 2 * sqrt(params.c1);
 params.c1_beta = 1500;
 params.c2_beta = 2 * sqrt(params.c1_beta);
-params.c1mt = 1.1;
+%these parameters below control how fast fish moves towards target and
+%tries to match its speed (params.target_velocity)
+params.c1mt = 1.5;
 params.c2mt = 2 * sqrt(params.c1mt);
 
-%%%% PREDATOR
+%%%% Predator definition
 Pred.pos = zeros(params.timesteps,params.dimensions);
 Pred.prey_visibility = 100;
 Pred.predator_visibility = 200;
-Pred.vel = 3;
+Pred.vel = 2;
 Pred.active = true;
+params.maxpred = 1;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Q leanring world parameters
+% Q learning world parameters
 params.gridsize = params.maxgrid / 40;
 
 params.num_states = params.maxnodes + (params.maxnodes * (params.maxpred * 6));
@@ -107,10 +121,18 @@ params.learning_rate = .2;
 params.discount_factor = .9;
 params.qlearning_r = 30;
 params.cl_weight = .8;
-params.reward = 1;
 
 %%%%% Q values
 use_stored_Q = false;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Data capture for final reporting
+%%% reward: per training run, per timestep
+%%% capture the mean network reward
+MSN.Report.Reward = zeros(episodes*training_runs,params.timesteps);
+MSN.Report.NN = zeros(episodes*training_runs,params.timesteps);
+MSN.Report.Pred_distance = zeros(episodes*training_runs,params.timesteps,params.maxnodes);
+MSN.Report.Mean_pred_distance = zeros(episodes*training_runs,params.timesteps);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%% Set up data structures
@@ -118,8 +140,7 @@ use_stored_Q = false;
 MSN.node = 1:params.maxnodes;
 MSN.neighbors = {};
 
-
-MSN.target_qmt = zeros(params.timesteps,params.dimensions);
+%MSN.target_qmt = zeros(params.timesteps,params.dimensions);
 MSN.target_qmt(1,:) = params.target_origin;
 MSN.center_mass = zeros(params.timesteps,params.dimensions);
 
@@ -137,18 +158,21 @@ else
 end
 
 % display figure
-h = figure('Name','Simulation Window','units','normalized','position',[.1 .1 .7 .7]);
+if ~params.training
+    h = figure('Name','Simulation Window','units','normalized','position',[.1 .1 .7 .7]);
+end
 
 MSN = initializeMSN(MSN,params);  
 %Prep for eventual movie
-movie_frames = snapshots; %set number of frames for the movie 
-mov(1:movie_frames) = struct('cdata', [],'colormap', []); % Preallocate movie structure.
-v = VideoWriter('\\files\users\djmendez\Documents\CS791\Final\flocking.mp4', 'MPEG-4');
-open(v);
+% movie_frames = snapshots; %set number of frames for the movie 
+% mov(1:movie_frames) = struct('cdata', [],'colormap', []); % Preallocate movie structure.
+% v = VideoWriter('\\files\users\djmendez\Documents\CS791\Final\flocking.mp4', 'MPEG-4');
+% open(v);
 % snapshot(MSN,P,1,1,1,params,h);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Main program
+MSN.current_run = 1;
 for e = 1:episodes
     for i = 1:training_runs   
         % Reset MSN
@@ -160,60 +184,59 @@ for e = 1:episodes
             randi(params.maxgrid) ...
             randi(params.maxgrid)];
         
-        % Reset Qlearning (wait til predator detected)
-        params.engage_Qlearning = false;
+%         % Reset Qlearning (wait til predator detected)
+%         params.engage_Qlearning = false;
 
         for t = 2:params.timesteps
             %Main function: recalc MSN next position
             [MSN,Q,Pred] = computePosition(MSN,Q,Pred,t,params);
 
             % take a snapshot if needed
-            if (mod((params.timesteps-t),floor(params.timesteps / snapshots)) == 0)
-                snapshot(MSN,Pred,e,i,t,params,h);
-                frame = getframe();
-                writeVideo(v,frame);
+            if ~params.training
+                if (mod((params.timesteps-t),floor(params.timesteps / snapshots)) == 0)
+                    snapshot(MSN,Pred,e,i,t,params,h);
+                    frame = getframe();
+                    %writeVideo(v,frame);
+                end
             end
+            
+            % record reward
+            MSN.Report.Reward(MSN.current_run,t) = mean(MSN.reward(t,:));
+            MSN.Report.NN(MSN.current_run,t) = mean(cellfun(@(x) numel(x),MSN.neighbors));          
+            MSN.Report.Mean_pred_distance(MSN.current_run,t) = ...
+                mean(MSN.Report.Pred_distance(MSN.current_run,t,:));
         end
+        MSN.current_run = MSN.current_run + 1;
     end
     
     % change parameters between episodes
     %params.epsilon = params.epsilon * .95;
 end
 
-close(v);
+%close(v);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%% PLOTS
 %%% Plot position of nodes over time
-%{
-figure('Name','Position');
+
+figure('Name','Reward');
 hold on
-for node = 1:params.maxnodes
-    plot(MSN.pos(:,node,1),MSN.pos(:,node,2));
+for run = 1:MSN.current_run-1
+    plot(MSN.Report.Reward(run,2:end))
 end
 hold off
 
-%%% Plot COM of nodes and target trajectory over time
-figure('Name','COM vs Target');
+figure('Name','Number of Neighbors');
 hold on
-plot(MSN.center_mass(2:params.timesteps));
-plot(MSN.target_qmt(2:params.timesteps));
+for run = 1:MSN.current_run-1
+    plot(MSN.Report.NN(run,2:end))
+end
 hold off
 
-%%% Plot position of nodes over time
-figure('Name','Velocity');
-velocity_vector = sqrt(MSN.vel(:,:,1).^2 + MSN.vel(:,:,2).^2);
+figure('Name','Mean Predator Distance');
 hold on
-plot (velocity_vector);
-%for node = 1:params.maxnodes
-   % plot(MSN.vel(:,node,1),MSN.vel(:,node,2));
-%end
+for run = 1:MSN.current_run-1
+    plot(MSN.Report.Mean_pred_distance(run,2:end))
+end
 hold off
 
-%%% Plot connectivity of nodes over time
-figure('Name','Connectivity');
-hold on
-axis ([0 params.timesteps 0 1]);
-plot(MSN.connectivity(2:end));
-hold off
-%}
 save('\\files\users\djmendez\Documents\CS791\Final\Q.mat','Q');

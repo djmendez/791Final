@@ -1,13 +1,20 @@
 function Pred = computePredator(Pred,MSN,t,p)
 %move predator
-    if isPreyDetected(MSN.center_mass(t-1,:),Pred.pos(t-1,:),Pred.predator_visibility)
-        pred_target = MSN.center_mass(t,:);
-    else
-        pred_target = [ ...
-            (p.maxgrid/4+randi(p.maxgrid/2)) ...
-            (p.maxgrid/4+randi(p.maxgrid/2)) ...
-            (p.maxgrid/4+randi(p.maxgrid/2))];
-    end
+
+% Compute Center of mass
+    MSN.center_mass(t-1,1) = mean(MSN.pos(t-1,:,1));
+    MSN.center_mass(t-1,2) = mean(MSN.pos(t-1,:,2));
+    MSN.center_mass(t-1,3) = mean(MSN.pos(t-1,:,3));
+
+
+%     if isPreyDetected(MSN.center_mass(t-1,:),Pred.pos(t-1,:),Pred.predator_visibility)
+        pred_target = MSN.center_mass(t-1,:);
+%     else
+%         pred_target = [ ...
+%             (p.maxgrid/4+randi(p.maxgrid/2)) ...
+%             (p.maxgrid/4+randi(p.maxgrid/2)) ...
+%             (p.maxgrid/4+randi(p.maxgrid/2))];
+%     end
     
     delta_x = pred_target(1) - Pred.pos(t-1,1);
     delta_y = pred_target(2) - Pred.pos(t-1,2);
