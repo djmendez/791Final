@@ -4,7 +4,6 @@ function [neighbors] = computeNeighbors(node,currNode,prevt,MSN,p)
     for neighbor = 1:p.maxnodes
         if node ~= neighbor
             currNeighbor = [MSN.pos(prevt,neighbor,1) MSN.pos(prevt,neighbor,2) MSN.pos(prevt,neighbor,3)];
-            distance = norm(currNode - currNeighbor,2);
             distance = sqrt((currNeighbor(1) - currNode(1))^2 + ...
                 (currNeighbor(2) - currNode(2))^2 + ...
                 (currNeighbor(3) - currNode(3))^2);
