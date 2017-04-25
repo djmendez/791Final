@@ -12,6 +12,7 @@ function MSN = getStateAndReward(MSN,t,p,pred)
         distance = sqrt((pred.pos(t,1) - currNode(1))^2 + ...
             (pred.pos(t,2) - currNode(2))^2 + ...
             (pred.pos(t,3) - currNode(3))^2);
+        MSN.pred_distance(t,node) = distance;
         % if predator within detection radius
         if distance < p.r
             predator_direction = directionPredator(pred.pos(t,:),currNode,p);
@@ -35,9 +36,8 @@ function MSN = getStateAndReward(MSN,t,p,pred)
         end
 
         % For reward approach 2 or combo(3)        
-        if p.reward == 2 || p.reward == 3
-            if (norm(pred.pos(t,:)-reshape(MSN.pos(t,node,:),1,p.dimensions)) > ...
-                    norm(pred.pos(t-1,:)-reshape(MSN.pos(t-1,node,:),1,p.dimensions)))
+        if (p.reward == 2 || p.reward == 3) && (t > 1)
+            if (MSN.pred_distance(t,node) > MSN.pred_distance(t-1,node))
                 reward2 = 5;
                 MSN.reward(t,node) = reward2;
             end
@@ -46,7 +46,7 @@ function MSN = getStateAndReward(MSN,t,p,pred)
         % For combo reward approach (3)
         % rewrite reward with sum of both approaches
         if p.reward == 3
-             MSN.reward(t_node) = reward1 + reward2;
+             MSN.reward(t,node) = reward1 + reward2;
         end
     end
 return

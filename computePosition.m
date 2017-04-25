@@ -58,8 +58,10 @@ function [MSN,Q,Pred] = computePosition(MSN,Q,Pred,t,p)
         [MSN] = doMovement(MSN,t,p);
         % Compute new State based on taken action and new position
         [MSN] = getStateAndReward(MSN,t,p,Pred);
-        %Update Q-values
-        [Q] = QUpdate(MSN,Q,t,p);
+        %Update Q-values - ONLY IF IN TRAINING
+        if p.training
+            [Q] = QUpdate(MSN,Q,t,p);
+        end
     % else continue moving using just the target
     else
         MSN = doMovement(MSN,t,p);

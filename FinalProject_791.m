@@ -3,12 +3,12 @@ clc, clear
 close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%% INPUT PARAMETERS
-%%%%%%%%%%%%%%%%%%%%%%%%% Frequently changed
+%%%%%%%%%%%%%%%%%%%%%%%%% Frequently changed Parameters HERE
 % Reward type: 
 % (1) Straigh Number neighbors 
 % (2) Distance to Predator 
 % (3) Combo
-params.reward = 1;
+params.reward = 3;
 
 % enable for training runs (disables graphics)
 params.training = true;
@@ -16,17 +16,24 @@ params.training = true;
 % total fish
 params.maxnodes = 30; 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % set running parameters depending on whether training or display
 if params.training
     episodes = 2;
     training_runs = 5;
     total_sim_time = 10;        % total simulation time
     snapshot_frequency = 100;    % fewer snapshots -- although turning off altogether
+    take_video = false;    
+    %%%%% Use stored Qvalues table
+    use_stored_Q = true;
 else
     episodes = 1;
     training_runs = 2;
     total_sim_time = 5;         % total simulation time
-    snapshot_frequency = 50;     % lower number so it looks more smooth
+    snapshot_frequency = 1;     % lower number so it looks more smooth
+    take_video = true;
+    %%%%% ALSO Use stored Qvalues table - duplicated for flexibility
+    use_stored_Q = true;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -37,9 +44,8 @@ params.target_movement = 3; % proper values are 0 (static), 1 (line), 2 (sin) 3 
 % Note that target_movement is only applicable for alg > 1
 
 params.maxgrid = 1000;
-%params.graphsize = 100;
 params.dimensions = 3;
-% range to see others
+%range to see others
 params.d = 200;
 
 % snapshots
@@ -93,6 +99,7 @@ params.c2_beta = 2 * sqrt(params.c1_beta);
 params.c1mt = 1.5;
 params.c2mt = 2 * sqrt(params.c1mt);
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Predator definition
 Pred.pos = zeros(params.timesteps,params.dimensions);
 Pred.prey_visibility = 100;
@@ -122,9 +129,6 @@ params.discount_factor = .9;
 params.qlearning_r = 30;
 params.cl_weight = .8;
 
-%%%%% Q values
-use_stored_Q = false;
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Data capture for final reporting
 %%% reward: per training run, per timestep
@@ -150,9 +154,12 @@ MSN.accel = zeros(params.timesteps,params.maxnodes,params.dimensions);
 MSN.connectivity = zeros(params.timesteps,1);
 
 % set up Q
+% filename = '\\files\users\djmendez\Documents\CS791\Final\Q.mat'
+Qfile_reward = sprintf('Q%d.mat',params.reward);
+
 if use_stored_Q == true && ...
-    exist('\\files\users\djmendez\Documents\CS791\Final\Q.mat','file') == 2
-    load('\\files\users\djmendez\Documents\CS791\Final\Q.mat');
+    exist(Qfile_reward,'file') == 2
+    load(Qfile_reward);
 else
     Q = zeros(params.num_states, params.num_actions, params.maxnodes);
 end
@@ -164,11 +171,13 @@ end
 
 MSN = initializeMSN(MSN,params);  
 %Prep for eventual movie
-% movie_frames = snapshots; %set number of frames for the movie 
-% mov(1:movie_frames) = struct('cdata', [],'colormap', []); % Preallocate movie structure.
-% v = VideoWriter('\\files\users\djmendez\Documents\CS791\Final\flocking.mp4', 'MPEG-4');
-% open(v);
-% snapshot(MSN,P,1,1,1,params,h);
+if take_video
+    movie_frames = snapshots; %set number of frames for the movie
+    mov(1:movie_frames) = struct('cdata', [],'colormap', []); % Preallocate movie structure.
+    v = VideoWriter('\\files\users\djmendez\Documents\CS791\Final\flocking.mp4', 'MPEG-4');
+    open(v);
+    snapshot(MSN,P,1,1,1,params,h);
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Main program
@@ -196,7 +205,9 @@ for e = 1:episodes
                 if (mod((params.timesteps-t),floor(params.timesteps / snapshots)) == 0)
                     snapshot(MSN,Pred,e,i,t,params,h);
                     frame = getframe();
-                    %writeVideo(v,frame);
+                    if take_video
+                        writeVideo(v,frame);
+                    end
                 end
             end
             
@@ -213,7 +224,10 @@ for e = 1:episodes
     %params.epsilon = params.epsilon * .95;
 end
 
-%close(v);
+if take_video
+    close(v);
+end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%% PLOTS
 %%% Plot position of nodes over time
@@ -239,4 +253,4 @@ for run = 1:MSN.current_run-1
 end
 hold off
 
-save('\\files\users\djmendez\Documents\CS791\Final\Q.mat','Q');
+save(Qfile_reward,'Q');

@@ -10,6 +10,7 @@ startpos = randi(p.maxgrid,p.maxnodes,p.dimensions);
 
 MSN.pos = zeros(p.timesteps,p.maxnodes,p.dimensions);
 MSN.pos(1,:,:) = startpos;
+MSN.pred_distance = zeros(p.timesteps,p.maxnodes);
 
 startaction = randi(p.num_actions,p.maxnodes,1);
 MSN.action = zeros(p.timesteps,p.maxnodes);
