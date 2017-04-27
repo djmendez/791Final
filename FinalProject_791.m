@@ -8,10 +8,10 @@ close all
 % (1) Straigh Number neighbors 
 % (2) Distance to Predator 
 % (3) Combo
-params.reward = 3;
+params.reward = 1;
 
 % enable for training runs (disables graphics)
-params.training = true;
+params.training = false;
 
 % total fish
 params.maxnodes = 15; 
@@ -19,8 +19,8 @@ params.maxnodes = 15;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % set running parameters depending on whether training or display
 if params.training
-    episodes = 2;
-    training_runs = 5;
+    episodes = 1;
+    training_runs = 1;
     total_sim_time = 10;        % total simulation time
     snapshot_frequency = 100;    % fewer snapshots -- although turning off altogether
     take_video = false;    
@@ -28,9 +28,9 @@ if params.training
     use_stored_Q = true;
 else
     episodes = 1;
-    training_runs = 2;
+    training_runs = 1;
     total_sim_time = 5;         % total simulation time
-    snapshot_frequency = 1;     % lower number so it looks more smooth
+    snapshot_frequency = 50;     % lower number so it looks more smooth
     take_video = true;
     %%%%% ALSO Use stored Qvalues table - duplicated for flexibility
     use_stored_Q = true;
@@ -45,8 +45,7 @@ params.target_movement = 3; % proper values are 0 (static), 1 (line), 2 (sin) 3 
 
 params.maxgrid = 1000;
 params.dimensions = 3;
-%range to see others
-params.d = 200;
+
 
 % snapshots
 params.dt = .008;
@@ -72,9 +71,12 @@ params.target_pmt = [15 20 10];
 params.target_distance = 200;
 params.target_velocity = 20;
 
+%%%%%%%%%%%%%%%%%%%%%%%% FLOCKING CONTROL MOVEMENT
 %Movement algorithm parameters
-params.eps = .3;
+params.eps = .1;
 params.k = 1.2;
+%range to see others
+params.d = 200;
 
 params.r = params.k * params.d;
 params.d_prime = 0.6 * params.d;
@@ -90,10 +92,17 @@ params.h_beta = .9;
 % Obstacle movement algorithm parameters - compute here so only do once
 params.h_alpha = .2;
 params.h_beta = .9;
+
+% Flocking control scaling constants
+% constants for two sums in ALGORITHM 1 - change these to change relative distance
 params.c1 = 30;
 params.c2 = 2 * sqrt(params.c1);
+
+% constants for two sums in ALGORITHM 2- change these to change relative distance
 params.c1_beta = 1500;
 params.c2_beta = 2 * sqrt(params.c1_beta);
+
+% ALGORITHM 2
 %these parameters below control how fast fish moves towards target and
 %tries to match its speed (params.target_velocity)
 params.c1mt = 1.5;
@@ -123,7 +132,7 @@ params.actions = 1:params.num_actions;
 %Q learning algorithm parameters
 params.enable_Qlearning = 1;
 params.q_learning_algorithm = 1;
-params.epsilon = .5;
+params.qlearning_epsilon = .5;
 params.learning_rate = .2;
 params.discount_factor = .9;
 params.qlearning_r = 30;
@@ -134,7 +143,7 @@ params.cl_weight = .8;
 %%% reward: per training run, per timestep
 %%% capture the mean network reward
 MSN.Report_Reward = zeros(episodes*training_runs,params.timesteps);
-MSN.Report_NN = zeros(episodes*training_runs,params.timesteps);
+MSN.Report_NN = zeros(episodes*training_runs*params.timesteps,1);
 MSN.Report_Pred_distance = zeros(episodes*training_runs,params.timesteps,params.maxnodes);
 MSN.Report_Mean_pred_distance = zeros(episodes*training_runs,params.timesteps);
 
@@ -176,7 +185,7 @@ if take_video
     mov(1:movie_frames) = struct('cdata', [],'colormap', []); % Preallocate movie structure.
     v = VideoWriter('\\files\users\djmendez\Documents\CS791\Final\flocking.mp4', 'MPEG-4');
     open(v);
-    snapshot(MSN,P,1,1,1,params,h);
+    %snapshot(MSN,P,1,1,1,params,h);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -212,8 +221,9 @@ for e = 1:episodes
             end
             
             % record reward
+            current_step = ((MSN.current_run - 1) * params.timesteps) + t;
             MSN.Report_Reward(MSN.current_run,t) = mean(MSN.reward(t,:));
-            MSN.Report_NN(MSN.current_run,t) = mean(cellfun(@(x) numel(x),MSN.neighbors));          
+            MSN.Report_NN(current_step) = mean(cellfun(@(x) numel(x),MSN.neighbors));          
             MSN.Report_Mean_pred_distance(MSN.current_run,t) = ...
                 mean(MSN.Report_Pred_distance(MSN.current_run,t,:));
         end
@@ -233,7 +243,11 @@ end
 %%% Plot position of nodes over time
 
 figure('Name','Reward');
+%axis ([0 MSN.current_run 0 params.maxnodes])
 hold on
+axis ([0 current_step 0 params.maxnodes])
+xlabel('Training Iteration')
+ylabel('Reward')
 for run = 1:MSN.current_run-1
     plot(MSN.Report_Reward(run,2:end))
 end
@@ -241,13 +255,18 @@ hold off
 
 figure('Name','Number of Neighbors');
 hold on
-for run = 1:MSN.current_run-1
-    plot(MSN.Report_NN(run,2:end))
-end
+axis ([0 current_step 0 params.maxnodes])
+xlabel('Training Iteration')
+ylabel('Number of Neighbors')
+plot(MSN.Report_NN(2:end))
 hold off
+
 
 figure('Name','Mean Predator Distance');
 hold on
+axis ([0 current_step 0 params.maxgrid])
+xlabel('Training Iteration')
+ylabel('Mean Predator Distance')
 for run = 1:MSN.current_run-1
     plot(MSN.Report_Mean_pred_distance(run,2:end))
 end
