@@ -8,10 +8,10 @@ close all
 % (1) Straigh Number neighbors 
 % (2) Distance to Predator 
 % (3) Combo
-params.reward = 1;
+params.reward = 2;
 
 % enable for training runs (disables graphics)
-params.training = false;
+params.training = true;
 
 % total fish
 params.maxnodes = 15; 
@@ -255,7 +255,19 @@ end
 
 figure('Name','Reward');
 hold on
-axis ([0 sample_step 0 params.maxnodes])
+
+switch params.reward
+    case 1
+        title('Reward #1: number of neighbors')
+        axis ([0 sample_step 0 params.maxnodes])
+    case 2
+        title('Reward #2: +5 if distance from predator is increased')
+        axis ([0 sample_step 0 5])
+    case 3
+        title('Reward #3 (Combined):number of neighbors +5 if increased distance')
+        axis ([0 sample_step 0 params.maxnodes])
+end
+
 xlabel('Training Iteration')
 ylabel('Reward')
 plot(MSN.Report_Reward(2:end))
@@ -279,3 +291,4 @@ plot(MSN.Report_Mean_pred_distance(2:end))
 hold off
 
 save(Qfile_reward,'Q');
+
