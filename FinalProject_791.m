@@ -14,7 +14,7 @@ params.reward = 3;
 params.training = true;
 
 % total fish
-params.maxnodes = 30; 
+params.maxnodes = 15; 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % set running parameters depending on whether training or display
