@@ -16,11 +16,14 @@ params.training = false;
 % total fish
 params.maxnodes = 15; 
 
+% sample every x timesteps
+params.sampling = 50;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % set running parameters depending on whether training or display
 if params.training
-    episodes = 1;
-    training_runs = 1;
+    episodes = 4;
+    training_runs = 100;
     total_sim_time = 10;        % total simulation time
     snapshot_frequency = 100;    % fewer snapshots -- although turning off altogether
     take_video = false;    
@@ -29,8 +32,8 @@ if params.training
 else
     episodes = 1;
     training_runs = 1;
-    total_sim_time = 5;         % total simulation time
-    snapshot_frequency = 50;     % lower number so it looks more smooth
+    total_sim_time = 10;         % total simulation time
+    snapshot_frequency = 20;     % lower number so it looks more smooth
     take_video = true;
     %%%%% ALSO Use stored Qvalues table - duplicated for flexibility
     use_stored_Q = true;
@@ -43,9 +46,8 @@ params.algorithm = 3;       % Alg1 - plain, Alg2 - attractor target, Alg3 - obst
 params.target_movement = 3; % proper values are 0 (static), 1 (line), 2 (sin) 3 (circle) 
 % Note that target_movement is only applicable for alg > 1
 
-params.maxgrid = 1000;
+params.maxgrid = 500;
 params.dimensions = 3;
-
 
 % snapshots
 params.dt = .008;
@@ -55,8 +57,8 @@ snapshots = params.timesteps / snapshot_frequency;
 params.direction = struct('NORTH',1,'EAST',2,'SOUTH',3,'WEST',4,'UP',5,'DOWN',6);
 
 %%%%%%%%%%%%%%% Obstable parameters
-params.obstacles.center = [200 400 500; 400 200 700; 500 700 400; 600 500 600; 800 350 300];
-params.obstacles.radii = [100; 50; 70; 40; 50];
+params.obstacles.center = [100 200 250; 200 100 350; 2500 350 200; 300 250 300; 400 175 150];
+params.obstacles.radii = [50; 50; 70; 40; 50];
 params.obstacles.number = size(params.obstacles.center,1);
 
 %%%%%%%%%%%%%%% Movement parameters
@@ -76,7 +78,7 @@ params.target_velocity = 20;
 params.eps = .1;
 params.k = 1.2;
 %range to see others
-params.d = 200;
+params.d = 100;
 
 params.r = params.k * params.d;
 params.d_prime = 0.6 * params.d;
@@ -142,10 +144,13 @@ params.cl_weight = .8;
 %%%% Data capture for final reporting
 %%% reward: per training run, per timestep
 %%% capture the mean network reward
-MSN.Report_Reward = zeros(episodes*training_runs,params.timesteps);
-MSN.Report_NN = zeros(episodes*training_runs*params.timesteps,1);
+%%% all these are subject to samplis as far too many datpoints otherwise
+MSN.Report_Reward = zeros(ceil(episodes*training_runs*params.timesteps/params.sampling),1);
+MSN.Report_NN = zeros(ceil(episodes*training_runs*params.timesteps/params.sampling),1);
+MSN.Report_Mean_pred_distance = ...
+    zeros(ceil(episodes*training_runs*params.timesteps/params.sampling),1);
+
 MSN.Report_Pred_distance = zeros(episodes*training_runs,params.timesteps,params.maxnodes);
-MSN.Report_Mean_pred_distance = zeros(episodes*training_runs,params.timesteps);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%% Set up data structures
@@ -191,6 +196,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Main program
 MSN.current_run = 1;
+sample_step = 1;
 for e = 1:episodes
     for i = 1:training_runs   
         % Reset MSN
@@ -221,11 +227,16 @@ for e = 1:episodes
             end
             
             % record reward
-            current_step = ((MSN.current_run - 1) * params.timesteps) + t;
-            MSN.Report_Reward(MSN.current_run,t) = mean(MSN.reward(t,:));
-            MSN.Report_NN(current_step) = mean(cellfun(@(x) numel(x),MSN.neighbors));          
-            MSN.Report_Mean_pred_distance(MSN.current_run,t) = ...
-                mean(MSN.Report_Pred_distance(MSN.current_run,t,:));
+            if ~mod(t,params.sampling)
+               MSN.Report_NN(sample_step) = mean(cellfun(@(x) numel(x),MSN.neighbors));   
+               MSN.Report_Reward(sample_step) = mean(MSN.reward(t,:));
+
+               MSN.Report_Mean_pred_distance(sample_step) = ...
+                    mean(MSN.Report_Pred_distance(MSN.current_run,t,:));
+            
+               sample_step = sample_step + 1;
+            end
+   
         end
         MSN.current_run = MSN.current_run + 1;
     end
@@ -243,19 +254,16 @@ end
 %%% Plot position of nodes over time
 
 figure('Name','Reward');
-%axis ([0 MSN.current_run 0 params.maxnodes])
 hold on
-axis ([0 current_step 0 params.maxnodes])
+axis ([0 sample_step 0 params.maxnodes])
 xlabel('Training Iteration')
 ylabel('Reward')
-for run = 1:MSN.current_run-1
-    plot(MSN.Report_Reward(run,2:end))
-end
+plot(MSN.Report_Reward(2:end))
 hold off
 
 figure('Name','Number of Neighbors');
 hold on
-axis ([0 current_step 0 params.maxnodes])
+axis ([0 sample_step 0 params.maxnodes])
 xlabel('Training Iteration')
 ylabel('Number of Neighbors')
 plot(MSN.Report_NN(2:end))
@@ -264,12 +272,10 @@ hold off
 
 figure('Name','Mean Predator Distance');
 hold on
-axis ([0 current_step 0 params.maxgrid])
+axis ([0 sample_step 0 params.maxgrid])
 xlabel('Training Iteration')
 ylabel('Mean Predator Distance')
-for run = 1:MSN.current_run-1
-    plot(MSN.Report_Mean_pred_distance(run,2:end))
-end
+plot(MSN.Report_Mean_pred_distance(2:end))
 hold off
 
 save(Qfile_reward,'Q');

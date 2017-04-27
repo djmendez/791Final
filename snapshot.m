@@ -19,14 +19,14 @@ c = [0 .9 0];
 fa = .1;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MAKE AQUARIUM 
-p1 = [0 1000 0];
-p2 = [1000 1000 0];
-p3 = [1000 1000 1000];
-p4 = [0 1000 1000]; 
-p5 = [1000 0 0];
-p6 = [1000 0 1000];
+p1 = [0 p.maxgrid 0];
+p2 = [p.maxgrid p.maxgrid 0];
+p3 = [p.maxgrid p.maxgrid p.maxgrid];
+p4 = [0 p.maxgrid p.maxgrid]; 
+p5 = [p.maxgrid 0 0];
+p6 = [p.maxgrid 0 p.maxgrid];
 p7 = [0 0 0];
-p8 = [0 0 1000];
+p8 = [0 0 p.maxgrid];
 
 %Back Wall (y = 1000)
 x = [p1(1) p2(1) p3(1) p4(1)];
