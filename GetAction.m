@@ -6,7 +6,7 @@ function MSN = GetAction(MSN, Q, t, p)
     for i = 1:p.maxnodes
         %get a random number between 0 and 1
         r = rand;
-        if (r < p.eps)
+        if (r < p.qlearning_epsilon)
             %if r is less than epsilon choose a random action for time t
             MSN.action(t-1,i) = randi(p.num_actions);
         else
