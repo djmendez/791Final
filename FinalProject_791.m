@@ -23,7 +23,7 @@ params.sampling = 50;
 % set running parameters depending on whether training or display
 if params.training
     episodes = 4;
-    training_runs = 100;
+    training_runs = 50;
     total_sim_time = 10;        % total simulation time
     snapshot_frequency = 100;    % fewer snapshots -- although turning off altogether
     take_video = false;    
@@ -134,7 +134,11 @@ params.actions = 1:params.num_actions;
 %Q learning algorithm parameters
 params.enable_Qlearning = 1;
 params.q_learning_algorithm = 1;
+
+%%% qlearning epsilon and its decrease rate per episode
 params.qlearning_epsilon = .5;
+qlearning_decrease_rate = .8;
+
 params.learning_rate = .2;
 params.discount_factor = .9;
 params.qlearning_r = 30;
@@ -249,7 +253,7 @@ for e = 1:episodes
     end
 
     % change parameters between episodes
-    %params.epsilon = params.epsilon * .95;
+    params.qlearning_epsilon = params.qlearning_epsilon * qlearning_decrease_rate;
 end
 
 if take_video
