@@ -239,8 +239,12 @@ for e = 1:episodes
    
         end
         MSN.current_run = MSN.current_run + 1;
+        status = sprintf('Completed training run %d out of total %d: %s', ...
+            MSN.current_run,episodes*training_runs,datestr(now));
+        disp(status)
     end
-    
+    status = sprintf('STARTING NEW EPISODE %d: %s',e,datestr(now));
+    disp(status)
     % change parameters between episodes
     %params.epsilon = params.epsilon * .95;
 end
