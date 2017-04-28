@@ -197,7 +197,11 @@ end
 %%% Main program
 MSN.current_run = 1;
 sample_step = 1;
+
 for e = 1:episodes
+    status = sprintf('STARTING NEW EPISODE %d: %s',e,datestr(now));
+    disp(status)
+    
     for i = 1:training_runs   
         % Reset MSN
         MSN = initializeMSN(MSN,params);  
@@ -243,8 +247,7 @@ for e = 1:episodes
             MSN.current_run,episodes*training_runs,datestr(now));
         disp(status)
     end
-    status = sprintf('STARTING NEW EPISODE %d: %s',e,datestr(now));
-    disp(status)
+
     % change parameters between episodes
     %params.epsilon = params.epsilon * .95;
 end
