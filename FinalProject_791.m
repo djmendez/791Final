@@ -11,7 +11,7 @@ close all
 params.reward = 2;
 
 % enable for training runs (disables graphics)
-params.training = false;
+params.training = true;
 
 % total fish
 params.maxnodes = 15; 
@@ -23,8 +23,8 @@ params.sampling = 1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % set running parameters depending on whether training or display
 if params.training
-    episodes = 4;
-    training_runs = 50;
+    episodes = 2;
+    training_runs = 5;
     total_sim_time = 10;        % total simulation time
     snapshot_frequency = 100;    % fewer snapshots -- although turning off altogether
     take_video = false;    
@@ -115,7 +115,7 @@ params.c2mt = 2 * sqrt(params.c1mt);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Predator definition
 Pred.pos = zeros(params.timesteps,params.dimensions);
-Pred.prey_visibility = 100;
+Pred.prey_visibility = 400;
 Pred.predator_visibility = 200;
 Pred.vel = 2;
 Pred.active = true;

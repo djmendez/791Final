@@ -64,16 +64,16 @@ function pred_direction = directionPredator(predPos,nodePos,p)
     y_theta = atan2d(delta_y,delta_x);
     
     if z_theta > 45 && z_theta < 135
-        pred_direction = p.direction.DOWN;
-    elseif z_theta < -45 && z_theta > -135
         pred_direction = p.direction.UP;
+    elseif z_theta < -45 && z_theta > -135
+        pred_direction = p.direction.DOWN;
     elseif y_theta < 45 && y_theta > -45
-        pred_direction = p.direction.WEST;
-    elseif y_theta < 135 && y_theta > 45
-        pred_direction = p.direction.SOUTH;
-    elseif y_theta > 135 && y_theta < -135
         pred_direction = p.direction.EAST;
-    else
+    elseif y_theta < 135 && y_theta > 45
         pred_direction = p.direction.NORTH;
+    elseif y_theta > 135 && y_theta < -135
+        pred_direction = p.direction.WEST;
+    else
+        pred_direction = p.direction.SOUTH;
     end
 return
