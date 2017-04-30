@@ -36,10 +36,10 @@ function MSN = getStateAndReward(MSN,t,p,pred)
         % For reward approach 2 or combo(3)        
         if (p.reward == 2 || p.reward == 3) && (t > 1) 
             delta_distance = MSN.pred_distance(t,node) - MSN.pred_distance(t-1,node);
-            if delta_distance > 10
+            if delta_distance > 0
                 % pass 2: make reward max -20 (min -50 delta distance * -1)
-                % reward2 = min(30,delta_distance);
-                reward2 = 10;
+                reward2 = min(10,delta_distance);
+                %reward2 = 10;
                 MSN.reward(t,node) = reward2;
             end
         end
@@ -60,9 +60,9 @@ function pred_direction = directionPredator(predPos,nodePos,p)
     
     %calculate angle in degrees
     % Angle from the z-axis approach
-    z_theta = atan2d(delta_z,delta_x) + 360*(delta_z);
+    z_theta = atan2d(delta_z,delta_x) + 360*(delta_z<0);
     % Angle from the y-axis approach
-    y_theta = atan2d(delta_y,delta_x) + 360*(delta_y);
+    y_theta = atan2d(delta_y,delta_x) + 360*(delta_y<0);
     
     if z_theta > 45 && z_theta < 135
         pred_direction = p.direction.UP;

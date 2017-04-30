@@ -8,13 +8,17 @@ function MSN = GetAction(MSN, Q, t, p)
         r = rand;
         if (r < p.qlearning_epsilon)
             %if r is less than epsilon choose a random action for time t
-            MSN.action(t-1,i) = randi(p.num_actions);
+            MSN.action(t-1,i) = randi(p.num_actions-1);
         else
             % else get the max / most optimal action in the current state
             state = MSN.state(t-1,i);
             %disp (state);
             [~, idx] = max(Q(i,state,:));
-            MSN.action(t-1,i) = idx;
+            if (idx ~= p.direction.NONE)
+                MSN.action(t-1,i) = idx;
+            else
+                MSN.action(t-1,i) = randi(p.num_actions-1);
+            end
         end
     end
 end

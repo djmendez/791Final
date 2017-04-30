@@ -24,12 +24,12 @@ params.sampling = 5;
 % set running parameters depending on whether training or display
 if params.training
     episodes = 4;
-    training_runs = 20;
+    training_runs = 50;
     total_sim_time = 10;        % total simulation time
     snapshot_frequency = 100;    % fewer snapshots -- although turning off altogether
     take_video = false;    
     %%%%% Use stored Qvalues table
-    use_stored_Q = true;
+    use_stored_Q = false;
 else
     episodes = 1;
     training_runs = 1;
