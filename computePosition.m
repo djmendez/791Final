@@ -84,15 +84,17 @@ function [target,target_velocity] = computeTarget(MSN,node,t,p)
         case p.direction.NORTH
             target(2) = target(2) + p.target_distance;
             target_velocity(2) = p.target_velocity;
-        case p.direction.EAST
-            target(1) = target(1) + p.target_distance;
-            target_velocity(1) = p.target_velocity;        
         case p.direction.SOUTH
             target(2) = target(2) - p.target_distance;
-            target_velocity(2) = -p.target_velocity;      
+            target_velocity(2) = -p.target_velocity;  
+            
+        case p.direction.EAST
+            target(1) = target(1) + p.target_distance;
+            target_velocity(1) = p.target_velocity;       
         case p.direction.WEST
             target(1) = target(1) - p.target_distance;
-            target_velocity(1) = -p.target_velocity;          
+            target_velocity(1) = -p.target_velocity;      
+            
         case p.direction.UP
             target(3) = target(3) + p.target_distance;
             target_velocity(3) = p.target_velocity;          

@@ -18,13 +18,13 @@ params.maxnodes = 15;
 
 % sample every x timesteps
 % (1 basically means no sampling and report all)
-params.sampling = 1;
+params.sampling = 5;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % set running parameters depending on whether training or display
 if params.training
-    episodes = 2;
-    training_runs = 5;
+    episodes = 4;
+    training_runs = 20;
     total_sim_time = 10;        % total simulation time
     snapshot_frequency = 100;    % fewer snapshots -- although turning off altogether
     take_video = false;    
@@ -56,7 +56,7 @@ params.timesteps = ceil(total_sim_time / params.dt);
 snapshots = params.timesteps / snapshot_frequency; 
 
 params.directions = 7;
-params.direction = struct('NORTH',1,'EAST',2,'SOUTH',3,'WEST',4,'UP',5,'DOWN',6,'NONE',7);
+params.direction = struct('NORTH',1,'SOUTH',2,'EAST',3,'WEST',4,'UP',5,'DOWN',6,'NONE',7);
 
 %%%%%%%%%%%%%%% Obstable parameters
 params.obstacles.center = [100 200 250; 200 100 350; 2500 350 200; 300 250 300; 400 175 150];
@@ -73,7 +73,7 @@ params.target_origin = [params.maxgrid/2 params.maxgrid/2 params.maxgrid/2];
 % when using predator/qlearning, below controls how far is the target for
 % an action and the speed the fish move to get there
 params.target_distance = params.maxgrid/5;
-params.target_velocity = 20;
+params.target_velocity = 40;
 
 %%%%%%%%%%%%%%%%%%%%%%%% FLOCKING CONTROL MOVEMENT
 %Movement algorithm parameters
@@ -116,7 +116,7 @@ params.c2mt = 2 * sqrt(params.c1mt);
 %%%% Predator definition
 Pred.pos = zeros(params.timesteps,params.dimensions);
 Pred.prey_visibility = 400;
-Pred.predator_visibility = 200;
+Pred.predator_visibility = 400;
 Pred.vel = 2;
 Pred.active = true;
 params.maxpred = 1;
@@ -140,7 +140,7 @@ params.enable_Qlearning = 1;
 params.q_learning_algorithm = 1;
 
 %%% qlearning epsilon and its decrease rate per episode
-params.qlearning_epsilon = .5;
+params.qlearning_epsilon = .3;
 qlearning_decrease_rate = .8;
 
 params.learning_rate = .2;
@@ -276,8 +276,8 @@ switch params.reward
         title('Reward #1: number of neighbors')
         axis ([0 sample_step 0 params.maxnodes])
     case 2
-        title('Reward #2: +5 if distance from predator is increased')
-        axis ([0 sample_step 0 5])
+        title('Reward #2: +10 if distance from predator is increased')
+        axis ([0 sample_step 0 10])
     case 3
         title('Reward #3 (Combined):number of neighbors +5 if increased distance')
         axis ([0 sample_step 0 params.maxnodes])

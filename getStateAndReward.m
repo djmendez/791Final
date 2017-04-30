@@ -38,7 +38,8 @@ function MSN = getStateAndReward(MSN,t,p,pred)
             delta_distance = MSN.pred_distance(t,node) - MSN.pred_distance(t-1,node);
             if delta_distance > 10
                 % pass 2: make reward max -20 (min -50 delta distance * -1)
-                reward2 = min(30,delta_distance);
+                % reward2 = min(30,delta_distance);
+                reward2 = 10;
                 MSN.reward(t,node) = reward2;
             end
         end
@@ -53,27 +54,33 @@ return
 
 % determine which relative direction predator is coming from
 function pred_direction = directionPredator(predPos,nodePos,p)   
-    delta_x = nodePos(1) - predPos(1);
-    delta_y = nodePos(2) - predPos(2);
-    delta_z = nodePos(3) - predPos(3);
+    delta_x = predPos(1) - nodePos(1);
+    delta_y = predPos(2) - nodePos(2);
+    delta_z = predPos(3) - nodePos(3);
     
     %calculate angle in degrees
     % Angle from the z-axis approach
-    z_theta = atan2d(delta_z,delta_x);
+    z_theta = atan2d(delta_z,delta_x) + 360*(delta_z);
     % Angle from the y-axis approach
-    y_theta = atan2d(delta_y,delta_x);
+    y_theta = atan2d(delta_y,delta_x) + 360*(delta_y);
     
     if z_theta > 45 && z_theta < 135
         pred_direction = p.direction.UP;
-    elseif z_theta < -45 && z_theta > -135
+    elseif z_theta > 225 && z_theta < 315 
         pred_direction = p.direction.DOWN;
-    elseif y_theta < 45 && y_theta > -45
+        
+    elseif y_theta < 45 || y_theta > 315
         pred_direction = p.direction.EAST;
-    elseif y_theta < 135 && y_theta > 45
-        pred_direction = p.direction.NORTH;
-    elseif y_theta > 135 && y_theta < -135
+    elseif y_theta > 135 && y_theta < 225
         pred_direction = p.direction.WEST;
-    else
+        
+    elseif y_theta > 45 && y_theta < 135
+        pred_direction = p.direction.NORTH;        
+    elseif y_theta < 315 && y_theta > 225
         pred_direction = p.direction.SOUTH;
+      
+    % should never get here
+    else
+        pred_direction = p.direction.NONE;
     end
 return
