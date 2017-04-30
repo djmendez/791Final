@@ -11,13 +11,14 @@ close all
 params.reward = 2;
 
 % enable for training runs (disables graphics)
-params.training = true;
+params.training = false;
 
 % total fish
 params.maxnodes = 15; 
 
 % sample every x timesteps
-params.sampling = 50;
+% (1 basically means no sampling and report all)
+params.sampling = 1;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % set running parameters depending on whether training or display
@@ -54,7 +55,8 @@ params.dt = .008;
 params.timesteps = ceil(total_sim_time / params.dt);
 snapshots = params.timesteps / snapshot_frequency; 
 
-params.direction = struct('NORTH',1,'EAST',2,'SOUTH',3,'WEST',4,'UP',5,'DOWN',6);
+params.directions = 7;
+params.direction = struct('NORTH',1,'EAST',2,'SOUTH',3,'WEST',4,'UP',5,'DOWN',6,'NONE',7);
 
 %%%%%%%%%%%%%%% Obstable parameters
 params.obstacles.center = [100 200 250; 200 100 350; 2500 350 200; 300 250 300; 400 175 150];
@@ -64,13 +66,13 @@ params.obstacles.number = size(params.obstacles.center,1);
 %%%%%%%%%%%%%%% Movement parameters
 params.target_origin = [params.maxgrid/2 params.maxgrid/2 params.maxgrid/2];
 
-params.circle_radius = params.maxgrid *.35;
-%target position and velocity *for when no predator is used*
-params.target_qmt = params.target_origin;
-params.target_pmt = [15 20 10];
+% params.circle_radius = params.maxgrid *.35;
+% %target position and velocity *for when no predator is used*
+% params.target_qmt = params.target_origin;
+% params.target_pmt = [15 20 10];
 % when using predator/qlearning, below controls how far is the target for
 % an action and the speed the fish move to get there
-params.target_distance = 200;
+params.target_distance = params.maxgrid/5;
 params.target_velocity = 20;
 
 %%%%%%%%%%%%%%%%%%%%%%%% FLOCKING CONTROL MOVEMENT
@@ -107,7 +109,7 @@ params.c2_beta = 2 * sqrt(params.c1_beta);
 % ALGORITHM 2
 %these parameters below control how fast fish moves towards target and
 %tries to match its speed (params.target_velocity)
-params.c1mt = 1.5;
+params.c1mt = 20;
 params.c2mt = 2 * sqrt(params.c1mt);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -121,15 +123,17 @@ params.maxpred = 1;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Q learning world parameters
-params.gridsize = params.maxgrid / 40;
+% params.gridsize = params.maxgrid / 40;
 
-params.num_states = params.maxnodes + (params.maxnodes * (params.maxpred * 6));
-params.num_actions = 5;
+% num actions is maximum directions
+params.num_actions = params.directions;
+% setting states to the number of possible directions
+params.num_states = params.directions;
 
 params.states = 1:params.num_states;
-params.safe_circle_radius = 50;
-params.max_distance = params.safe_circle_radius * params.num_states;
 params.actions = 1:params.num_actions;
+% params.safe_circle_radius = 50;
+% params.max_distance = params.safe_circle_radius * params.num_states;
 
 %Q learning algorithm parameters
 params.enable_Qlearning = 1;
@@ -179,7 +183,7 @@ if use_stored_Q == true && ...
     exist(Qfile_reward,'file') == 2
     load(Qfile_reward);
 else
-    Q = zeros(params.num_states, params.num_actions, params.maxnodes);
+    Q = zeros(params.maxnodes, params.num_states, params.num_actions);
 end
 
 % display figure
@@ -246,10 +250,10 @@ for e = 1:episodes
             end
    
         end
-        MSN.current_run = MSN.current_run + 1;
         status = sprintf('Completed training run %d out of total %d: %s', ...
             MSN.current_run,episodes*training_runs,datestr(now));
         disp(status)
+        MSN.current_run = MSN.current_run + 1;
     end
 
     % change parameters between episodes

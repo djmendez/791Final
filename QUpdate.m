@@ -3,12 +3,14 @@ function Q = QUpdate(MSN, Q, t, p)
     % for each robot's Q matrix update current state action pair
     for i = 1:p.maxnodes
         % variables for clarity
-        current_state = MSN.state(t-1,i,1) + (p.maxnodes * MSN.state(t-1,i,2));
-        next_state = MSN.state(t,i,1) + (p.maxnodes * MSN.state(t,i,2));
-        [~, max_next_action] = max(Q(next_state, :, i));
-        Q_state_action = Q(current_state, MSN.action(t-1, i), i);
+        current_state = MSN.state(t-1,i);
+        current_action = MSN.action(t-1,i);
+        
+        next_state = MSN.state(t,i);   
+        [~, max_next_action] = max(Q(i, next_state, :));
         
         %do the q update equation
+        Q_state_action = Q(i,current_state, max_next_action);
         update = Q_state_action + (p.learning_rate * (MSN.reward(t,i) + ...
             (p.discount_factor * max_next_action) - Q_state_action));
         
@@ -20,6 +22,6 @@ function Q = QUpdate(MSN, Q, t, p)
         
         %state an action should really be a pair at the same times
         %still need to figure this out
-        Q(current_state, MSN.action(t-1, i), i) = update;
+        Q(i,current_state,current_action) = update;
     end
 end

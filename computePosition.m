@@ -3,14 +3,14 @@
 function [MSN,Q,Pred] = computePosition(MSN,Q,Pred,t,p)
     prevt = t - 1;
 
-    % Compute Target Position
-    if p.algorithm > 1 && p.target_movement > 0
-        p.target_qmt(:,1) =  p.target_origin(:,1) - (p.circle_radius * cos(.005*t));
-        p.target_qmt(:,2) =  p.target_origin(:,2) + (p.circle_radius * sin(.005*t));
-        % amplitude * sin (frequency * t)
-        p.target_qmt(:,3) =  p.target_origin(:,3) - (200 * sin(.01*t));
-        %MSN.target_qmt(t,:) = p.target_qmt;
-    end
+%     % Compute Target Position
+%     if p.algorithm > 1 && p.target_movement > 0
+%         p.target_qmt(:,1) =  p.target_origin(:,1) - (p.circle_radius * cos(.005*t));
+%         p.target_qmt(:,2) =  p.target_origin(:,2) + (p.circle_radius * sin(.005*t));
+%         % amplitude * sin (frequency * t)
+%         p.target_qmt(:,3) =  p.target_origin(:,3) - (200 * sin(.01*t));
+%         %MSN.target_qmt(t,:) = p.target_qmt;
+%     end
 
     % Compute Predator Position            
     Pred = computePredator(Pred,MSN,t,p);
@@ -22,50 +22,22 @@ function [MSN,Q,Pred] = computePosition(MSN,Q,Pred,t,p)
         currNode = [MSN.pos(prevt,node,1) MSN.pos(prevt,node,2) MSN.pos(prevt,node,3)];
         %get neighbors
         [MSN.neighbors{node}] = computeNeighbors(node,currNode,prevt,MSN,p);
-%%%%%% NIKI -- IS THIS RIGHT? We are setting the reward in this call before
-%%%%%% we do action?
-        [MSN] = getStateAndReward(MSN,t-1,p,Pred);
-        % if predator is visible then do qlearning
-        % once the first bird sees the predator Qlearning will remain engaged
-        % Qlearning will be used to select action and then
-        % action determines target, target determines movement
-%         if p.enable_Qlearning && ~p.engage_Qlearning && Pred.active
-%             if isPredatorDetected(currNode,Pred.pos(prevt,:),Pred.prey_visibility)
-%                 % WAITING FOR QLEARNING TO BE CONNECTED - Currently never
-%                 % turn on
-%                 p.engage_Qlearning = true;
-%                 [MSN] = getStateAndReward(MSN,t-1,p,Pred);
-%             end
- %       end
     end
 
-    % If a predator has been detected and Qlearning engaged, then use it to
-    % move
-    if p.enable_Qlearning
-        %DISCUSS: DOn't think we should make the predator an obstacle --
-        %let them figure it out
-%         %add obstacle to account for predator
-%         p.obstacles.center(p.obstacles.number+1,:) = pred.pos(prevt,:);
-%         p.obstacles.radii(p.obstacles.number+1) = pred.prey_visibility;
-
-        %call Qlearning to determine action
-        % expected return is MSN.action(t,all nodes)
-        % will determine position at current time t based on 
-        % prev position at time t-1
-        % determine action for this time
-        [MSN] = GetAction(MSN,Q,t,p);
-        % perform action and compute position for time t (based on t-1)
-        [MSN] = doMovement(MSN,t,p);
-        % Compute new State based on taken action and new position
-        [MSN] = getStateAndReward(MSN,t,p,Pred);
-        %Update Q-values - ONLY IF IN TRAINING
-        if p.training
-            [Q] = QUpdate(MSN,Q,t,p);
-        end
-    % else continue moving using just the target
-    else
-        MSN = doMovement(MSN,t,p);
-    end
+    %call Qlearning to determine action
+    % expected return is MSN.action(t,all nodes)
+    % will determine position at current time t based on
+    % prev position at time t-1
+    % determine action for this time
+    [MSN] = GetAction(MSN,Q,t,p);
+    % perform action and compute position for time t (based on t-1)
+    [MSN] = doMovement(MSN,t,p);
+    % Compute new State based on taken action and new position
+    [MSN] = getStateAndReward(MSN,t,p,Pred);
+    %Update Q-values - ONLY IF IN TRAINING
+    %       if p.training
+    [Q] = QUpdate(MSN,Q,t,p);
+    %        end
     
 % End Function
 end
@@ -75,13 +47,13 @@ function MSN = doMovement(MSN,t,p)
     prevt = t - 1;
 
     for node = 1:p.maxnodes
-        % if Qlearning, then target gets set based on action
-        if p.enable_Qlearning
-            %action = MSN.action(prevt,node);
-            [p.target_qmt,p.target_pmt] = computeTarget(MSN,node,t,p);
-            %MSN.target_qmt(t,:) = p.target_qmt;
-        end
-        
+%         % if Qlearning, then target gets set based on action
+%         if p.enable_Qlearning
+%             %action = MSN.action(prevt,node);
+        [p.target_qmt,p.target_pmt] = computeTarget(MSN,node,t,p);
+%             %MSN.target_qmt(t,:) = p.target_qmt;
+%         end
+%         
         %Actually compute movement
         %ComputeNodeAccel will compute accurately 
         % In the event of Qlearning/predator, target has been set
@@ -102,17 +74,7 @@ function MSN = doMovement(MSN,t,p)
         % compute velocity given new position
         MSN.vel(t,node,:) = (MSN.pos(t,node,:) - MSN.pos(prevt,node,:)) / p.dt;
     end
-
-
 end
-
-% function predator = isPredatorDetected(node,predpos,pred_radius)
-%     predator = false;
-%     distance = sqrt((node(1) - predpos(1))^2 + (node(2) - predpos(2))^2);
-%     if distance < pred_radius
-%         predator = true;
-%     end
-% end
 
 function [target,target_velocity] = computeTarget(MSN,node,t,p)
     action = MSN.action(t-1,node);
@@ -139,3 +101,11 @@ function [target,target_velocity] = computeTarget(MSN,node,t,p)
             target_velocity(3) = -p.target_velocity;            
     end
 end
+
+% function predator = isPredatorDetected(node,predpos,pred_radius)
+%     predator = false;
+%     distance = sqrt((node(1) - predpos(1))^2 + (node(2) - predpos(2))^2);
+%     if distance < pred_radius
+%         predator = true;
+%     end
+% end

@@ -6,25 +6,23 @@ function MSN = getStateAndReward(MSN,t,p,pred)
         number_neighbors = size(MSN.neighbors{node},2);
         
         % Determine direction of predator approach
-        % Note here that predator_direction can be 0 if there is no predator
-        % or none has been detected yet (i.e. outise radius of detection)
-        predator_direction = 0;        
-        distance = sqrt((pred.pos(t,1) - currNode(1))^2 + ...
+   
+        distance_to_pred = sqrt((pred.pos(t,1) - currNode(1))^2 + ...
             (pred.pos(t,2) - currNode(2))^2 + ...
             (pred.pos(t,3) - currNode(3))^2);
-        MSN.pred_distance(t,node) = distance;
-        % if predator within detection radius
-        if distance < p.r
+        MSN.pred_distance(t,node) = distance_to_pred;
+
+        %%% decide whether can be not seen - then not call
+        if distance_to_pred < pred.prey_visibility
             predator_direction = directionPredator(pred.pos(t,:),currNode,p);
+        else
+            predator_direction = p.direction.NONE;
         end
-        MSN.Report_Pred_distance(MSN.current_run,t,node) = distance;
+     
+        MSN.Report_Pred_distance(MSN.current_run,t,node) = distance_to_pred;
         
-        % add one to count self as a neighbor, makes indexing work later
-        MSN.state(t,node,1) = number_neighbors + 1;
-        %if Qlearning engaged (i.e. predator detected) 
-%        if p.engage_Qlearning
-        MSN.state(t,node,2) = predator_direction;
-%        end
+        MSN.state(t,node) = predator_direction;
+
         % Alternate reward approaches 
         reward1 = 0;
         reward2 = 0;
@@ -36,9 +34,11 @@ function MSN = getStateAndReward(MSN,t,p,pred)
         end
 
         % For reward approach 2 or combo(3)        
-        if (p.reward == 2 || p.reward == 3) && (t > 1)
-            if (MSN.pred_distance(t,node) > MSN.pred_distance(t-1,node))
-                reward2 = 5;
+        if (p.reward == 2 || p.reward == 3) && (t > 1) 
+            delta_distance = MSN.pred_distance(t,node) - MSN.pred_distance(t-1,node);
+            if delta_distance > 10
+                % pass 2: make reward max -20 (min -50 delta distance * -1)
+                reward2 = min(30,delta_distance);
                 MSN.reward(t,node) = reward2;
             end
         end
