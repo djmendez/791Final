@@ -38,7 +38,7 @@ function MSN = getStateAndReward(MSN,t,p,pred)
             delta_distance = MSN.pred_distance(t,node) - MSN.pred_distance(t-1,node);
             if delta_distance > 0
                 % pass 2: make reward max -20 (min -50 delta distance * -1)
-                reward2 = min(10,delta_distance);
+                reward2 = min(20,2*delta_distance);
                 %reward2 = 10;
                 MSN.reward(t,node) = reward2;
             end

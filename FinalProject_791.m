@@ -24,18 +24,18 @@ params.sampling = 5;
 % set running parameters depending on whether training or display
 if params.training
     episodes = 4;
-    training_runs = 50;
+    training_runs = 20;
     total_sim_time = 10;        % total simulation time
     snapshot_frequency = 100;    % fewer snapshots -- although turning off altogether
     take_video = false;    
-    %%%%% Use stored Qvalues table
-    use_stored_Q = false;
+    %%%%% Use stored Qvalues table IF EXISTS
+    use_stored_Q = true;
 else
     episodes = 1;
     training_runs = 1;
     total_sim_time = 10;         % total simulation time
     snapshot_frequency = 20;     % lower number so it looks more smooth
-    take_video = true;
+    take_video = false;
     %%%%% ALSO Use stored Qvalues table - duplicated for flexibility
     use_stored_Q = true;
 end
@@ -99,7 +99,7 @@ params.h_beta = .9;
 
 % Flocking control scaling constants
 % constants for two sums in ALGORITHM 1 - change these to change relative distance
-params.c1 = 30;
+params.c1 = 1;
 params.c2 = 2 * sqrt(params.c1);
 
 % constants for two sums in ALGORITHM 2- change these to change relative distance
@@ -109,7 +109,7 @@ params.c2_beta = 2 * sqrt(params.c1_beta);
 % ALGORITHM 2
 %these parameters below control how fast fish moves towards target and
 %tries to match its speed (params.target_velocity)
-params.c1mt = 20;
+params.c1mt = 300;
 params.c2mt = 2 * sqrt(params.c1mt);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -268,21 +268,23 @@ end
 %%%%%%%%%%%%%%% PLOTS
 %%% Plot position of nodes over time
 
+if use_stored_Q; Qstring = 'True'; else Qstring = 'False'; end
+
 figure('Name','Reward');
 hold on
-
 switch params.reward
     case 1
-        title('Reward #1: number of neighbors')
+        firstline = 'Reward #1: number of neighbors';
         axis ([0 sample_step 0 params.maxnodes])
     case 2
-        title('Reward #2: +10 if distance from predator is increased')
+        firstline = 'Reward #2: +10 if distance from predator is increased';
         axis ([0 sample_step 0 10])
     case 3
-        title('Reward #3 (Combined):number of neighbors +5 if increased distance')
+        firstline = 'Reward #3 (Combined):number of neighbors +5 if increased distance';
         axis ([0 sample_step 0 params.maxnodes])
 end
-
+secondline = sprintf('Q: %s: Average reward: %2.2f',Qstring,mean(MSN.Report_Reward(2:end)));
+title ({firstline,secondline})
 xlabel('Training Iteration')
 ylabel('Reward')
 plot(MSN.Report_Reward(2:end))
@@ -290,20 +292,26 @@ hold off
 
 figure('Name','Number of Neighbors');
 hold on
+secondline = sprintf('Q: %s: Average neighbors: %2.2f',Qstring,mean(MSN.Report_NN(2:end)));
+title (secondline)
 axis ([0 sample_step 0 params.maxnodes])
 xlabel('Training Iteration')
 ylabel('Number of Neighbors')
 plot(MSN.Report_NN(2:end))
 hold off
 
-
 figure('Name','Mean Predator Distance');
 hold on
+secondline = sprintf('Q: %s: Average distance: %2.2f',Qstring,...
+    mean(MSN.Report_Mean_pred_distance(2:end)));
+title (secondline)
 axis ([0 sample_step 0 params.maxgrid])
 xlabel('Training Iteration')
 ylabel('Mean Predator Distance')
 plot(MSN.Report_Mean_pred_distance(2:end))
 hold off
 
-save(Qfile_reward,'Q');
+if params.training
+    save(Qfile_reward,'Q');
+end
 

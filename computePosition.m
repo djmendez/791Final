@@ -47,19 +47,11 @@ function MSN = doMovement(MSN,t,p)
     prevt = t - 1;
 
     for node = 1:p.maxnodes
-%         % if Qlearning, then target gets set based on action
-%         if p.enable_Qlearning
-%             %action = MSN.action(prevt,node);
+
         [p.target_qmt,p.target_pmt] = computeTarget(MSN,node,t,p);
-%             %MSN.target_qmt(t,:) = p.target_qmt;
-%         end
-%         
+     
         %Actually compute movement
-        %ComputeNodeAccel will compute accurately 
-        % In the event of Qlearning/predator, target has been set
-        % to direction and predator as obstacle
-        % If no Qlearning/predator, target is the moving target and no
-        % predator
+        % In the event of Qlearning/predator, target has been set to direction
         MSN.accel(t,node,:) = computeNodeAccel(node,MSN.neighbors{node},MSN,p,t);
         %q(k) = qi(k-1) + Delta_t*p (k) + ((Delta_t)^2/2) *ui (k);
         MSN.pos(t,node,:) =  MSN.pos(prevt,node,:) + (MSN.vel(prevt,node,:) * p.dt) + (MSN.accel(t,node,:) * .5 * p.dt^2);
@@ -86,21 +78,21 @@ function [target,target_velocity] = computeTarget(MSN,node,t,p)
             target_velocity(2) = p.target_velocity;
         case p.direction.SOUTH
             target(2) = target(2) - p.target_distance;
-            target_velocity(2) = -p.target_velocity;  
+            target_velocity(2) = p.target_velocity;  
             
         case p.direction.EAST
             target(1) = target(1) + p.target_distance;
             target_velocity(1) = p.target_velocity;       
         case p.direction.WEST
             target(1) = target(1) - p.target_distance;
-            target_velocity(1) = -p.target_velocity;      
+            target_velocity(1) = p.target_velocity;      
             
         case p.direction.UP
             target(3) = target(3) + p.target_distance;
             target_velocity(3) = p.target_velocity;          
         case p.direction.DOWN
             target(3) = target(3) - p.target_distance;
-            target_velocity(3) = -p.target_velocity;            
+            target_velocity(3) = p.target_velocity;            
     end
 end
 
