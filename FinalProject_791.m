@@ -8,7 +8,7 @@ close all
 % (1) Straigh Number neighbors 
 % (2) Distance to Predator 
 % (3) Combo
-params.reward = 2;
+params.reward = 1;
 
 % enable for training runs (disables graphics)
 params.training = false;
@@ -37,7 +37,7 @@ else
     snapshot_frequency = 20;     % lower number so it looks more smooth
     take_video = false;
     %%%%% ALSO Use stored Qvalues table - duplicated for flexibility
-    use_stored_Q = false;
+    use_stored_Q = true;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -231,7 +231,7 @@ for e = 1:episodes
     for i = 1:training_runs 
               
         if params.training
-            MSN.startpos = randi(p.maxgrid,p.maxnodes,p.dimensions);
+            MSN.startpos = randi(params.maxgrid,params.maxnodes,params.dimensions);
             Pred.pos(1,:) = randi(params.maxgrid,3,1)*.9;
         end
         
