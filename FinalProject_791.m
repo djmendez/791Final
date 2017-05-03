@@ -9,16 +9,7 @@ close all
 % (2) Distance to Predator 
 % (3) Combo
 params.reward = 3;
-
-% enable for training runs (disables graphics)
-params.training = false;
-
-% total fish
-params.maxnodes = 15; 
-
-% sample every x timesteps
-% (1 basically means no sampling and report all)
-params.sampling = 5;
+params.training = false; % enable for training runs (disables graphics)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % set running parameters depending on whether training or display
@@ -34,11 +25,17 @@ else
     episodes = 1;
     training_runs = 1;
     total_sim_time = 10;         % total simulation time
-    snapshot_frequency = 20;     % lower number so it looks more smooth
+    snapshot_frequency = 20;     % lower number makes it look more smooth
     take_video = false;
-    %%%%% ALSO Use stored Qvalues table - duplicated for flexibility
+    %%%%% true uses trained Q, false does a no-learning simulation run
     use_stored_Q = true;
 end
+
+% total fish
+params.maxnodes = 15; 
+
+% sample every x timesteps
+params.sampling = 5; % (1 basically means no sampling and report all)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%% Other key world parameters
@@ -66,10 +63,6 @@ params.obstacles.number = size(params.obstacles.center,1);
 %%%%%%%%%%%%%%% Movement parameters
 params.target_origin = [params.maxgrid/2 params.maxgrid/2 params.maxgrid/2];
 
-% params.circle_radius = params.maxgrid *.35;
-% %target position and velocity *for when no predator is used*
-% params.target_qmt = params.target_origin;
-% params.target_pmt = [15 20 10];
 % when using predator/qlearning, below controls how far is the target for
 % an action and the speed the fish move to get there
 params.target_distance = params.maxgrid/5;
@@ -140,6 +133,7 @@ params.enable_Qlearning = 1;
 params.q_learning_algorithm = 1;
 
 %%% qlearning epsilon and its decrease rate per episode
+% disable all learning if not training
 if ~params.training
     params.qlearning_epsilon = 0;
 else
@@ -180,8 +174,7 @@ MSN.vel = zeros(params.timesteps,params.maxnodes,params.dimensions);
 MSN.accel = zeros(params.timesteps,params.maxnodes,params.dimensions);
 MSN.connectivity = zeros(params.timesteps,1);
 
-% set up Q
-% filename = '\\files\users\djmendez\Documents\CS791\Final\Q.mat'
+% QFile
 Qfile_reward = sprintf('Q%d.mat',params.reward);
 
 if use_stored_Q == 1 && ...
@@ -210,17 +203,20 @@ end
 MSN.current_run = 1;
 sample_step = 1;
 
-% set starting positions - fixed for data capture and will get randomized
-% for training
+% set starting positions - fixed for demo, but randomized for training
 if ~params.training 
     startpos_file = 'start_pos_rec.mat';
+    % if a starting position exists, use it
     if exist(startpos_file,'file') == 2
         load(startpos_file);
+    %else make a new one and save it
     else
         startpos = randi(params.maxgrid,params.maxnodes,params.dimensions);
         save(startpos_file,'startpos');
     end
     MSN.startpos = startpos;
+    
+    % starting pred position for this set of non-training runs
     Pred.pos(1,:) = [450 450 450];
 end
 
@@ -265,6 +261,8 @@ for e = 1:episodes
             end
    
         end
+        
+        % feedbavk to console to know progress
         status = sprintf('Completed training run %d out of total %d: %s', ...
             MSN.current_run,episodes*training_runs,datestr(now));
         disp(status)
@@ -281,6 +279,7 @@ end
 
 do_plots(MSN,params,sample_step,Pred,use_stored_Q);
 
+% save Qfile ONLY if training
 if params.training
     save(Qfile_reward,'Q');
 end
