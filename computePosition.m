@@ -36,7 +36,9 @@ function [MSN,Q,Pred] = computePosition(MSN,Q,Pred,t,p)
     [MSN] = getStateAndReward(MSN,t,p,Pred);
     %Update Q-values - ONLY IF IN TRAINING
     %       if p.training
-    [Q] = QUpdate(MSN,Q,t,p);
+    if p.training 
+        [Q] = QUpdate(MSN,Q,t,p);
+    end
     %        end
     
 % End Function

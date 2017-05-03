@@ -10,10 +10,16 @@ function Pred = computePredator(Pred,MSN,t,p)
 %     if isPreyDetected(MSN.center_mass(t-1,:),Pred.pos(t-1,:),Pred.predator_visibility)
 %        pred_target = MSN.center_mass(t-1,:);
 %     else
+%         pred_target = [ ...
+%             (p.maxgrid/4+randi(p.maxgrid/2)) ...
+%             (p.maxgrid/4+randi(p.maxgrid/2)) ...
+%             (p.maxgrid/4+randi(p.maxgrid/2))];        
+%         
         pred_target = [ ...
-            (p.maxgrid/4+randi(p.maxgrid/2)) ...
-            (p.maxgrid/4+randi(p.maxgrid/2)) ...
-            (p.maxgrid/4+randi(p.maxgrid/2))];
+            (randi(p.maxgrid) * 9) ...
+            (randi(p.maxgrid) *.9) ...
+            (randi(p.maxgrid) *.9) ...
+            ];
 %     end
     
     delta_x = pred_target(1) - Pred.pos(t-1,1);
@@ -26,9 +32,9 @@ function Pred = computePredator(Pred,MSN,t,p)
     % Angle from the y-axis approach
     y_theta = atan2d(delta_y,delta_x);
     
-    Pred.pos(t,1) =  max(0,min(p.maxgrid,Pred.pos(t-1,1) + (Pred.vel * p.dt * delta_x)));
-    Pred.pos(t,2) =  max(0,min(p.maxgrid,Pred.pos(t-1,2) + (Pred.vel * p.dt * cos(y_theta) * delta_y)));
-    Pred.pos(t,3) =  max(0,min(p.maxgrid,Pred.pos(t-1,3) + (Pred.vel * p.dt * cos(z_theta) * delta_z)));
+    Pred.pos(t,1) =  max(0,min(p.maxgrid,Pred.pos(t-1,1) + (Pred.vel * p.dt)));
+    Pred.pos(t,2) =  max(0,min(p.maxgrid,Pred.pos(t-1,2) + (Pred.vel * p.dt * cos(y_theta))));
+    Pred.pos(t,3) =  max(0,min(p.maxgrid,Pred.pos(t-1,3) + (Pred.vel * p.dt * cos(z_theta))));
 return
 
 function prey = isPreyDetected(MSN_center,predpos,predvisibility)

@@ -5,8 +5,7 @@ function MSN = getStateAndReward(MSN,t,p,pred)
         currNode = [MSN.pos(t,node,1) MSN.pos(t,node,2) MSN.pos(t,node,3)];
         number_neighbors = size(MSN.neighbors{node},2);
         
-        % Determine direction of predator approach
-   
+        % Determine direction of predator approach   
         distance_to_pred = sqrt((pred.pos(t,1) - currNode(1))^2 + ...
             (pred.pos(t,2) - currNode(2))^2 + ...
             (pred.pos(t,3) - currNode(3))^2);
@@ -38,7 +37,7 @@ function MSN = getStateAndReward(MSN,t,p,pred)
             delta_distance = MSN.pred_distance(t,node) - MSN.pred_distance(t-1,node);
             if delta_distance > 0
                 % pass 2: make reward max -20 (min -50 delta distance * -1)
-                reward2 = min(20,2*delta_distance);
+                reward2 = min(20,5*delta_distance);
                 %reward2 = 10;
                 MSN.reward(t,node) = reward2;
             end
@@ -64,9 +63,9 @@ function pred_direction = directionPredator(predPos,nodePos,p)
     % Angle from the y-axis approach
     y_theta = atan2d(delta_y,delta_x) + 360*(delta_y<0);
     
-    if z_theta > 45 && z_theta < 135
+    if z_theta > 60 && z_theta < 120
         pred_direction = p.direction.UP;
-    elseif z_theta > 225 && z_theta < 315 
+    elseif z_theta > 240 && z_theta < 300 
         pred_direction = p.direction.DOWN;
         
     elseif y_theta < 45 || y_theta > 315

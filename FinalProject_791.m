@@ -11,7 +11,7 @@ close all
 params.reward = 2;
 
 % enable for training runs (disables graphics)
-params.training = true;
+params.training = false;
 
 % total fish
 params.maxnodes = 15; 
@@ -24,7 +24,7 @@ params.sampling = 5;
 % set running parameters depending on whether training or display
 if params.training
     episodes = 4;
-    training_runs = 20;
+    training_runs = 5;
     total_sim_time = 10;        % total simulation time
     snapshot_frequency = 100;    % fewer snapshots -- although turning off altogether
     take_video = false;    
@@ -37,7 +37,7 @@ else
     snapshot_frequency = 20;     % lower number so it looks more smooth
     take_video = false;
     %%%%% ALSO Use stored Qvalues table - duplicated for flexibility
-    use_stored_Q = true;
+    use_stored_Q = false;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -99,7 +99,7 @@ params.h_beta = .9;
 
 % Flocking control scaling constants
 % constants for two sums in ALGORITHM 1 - change these to change relative distance
-params.c1 = 1;
+params.c1 = 50;
 params.c2 = 2 * sqrt(params.c1);
 
 % constants for two sums in ALGORITHM 2- change these to change relative distance
@@ -140,7 +140,12 @@ params.enable_Qlearning = 1;
 params.q_learning_algorithm = 1;
 
 %%% qlearning epsilon and its decrease rate per episode
-params.qlearning_epsilon = .3;
+if ~params.training
+    params.qlearning_epsilon = 0;
+else
+    params.qlearning_epsilon = .3;
+end
+    
 qlearning_decrease_rate = .8;
 
 params.learning_rate = .2;
@@ -179,7 +184,7 @@ MSN.connectivity = zeros(params.timesteps,1);
 % filename = '\\files\users\djmendez\Documents\CS791\Final\Q.mat'
 Qfile_reward = sprintf('Q%d.mat',params.reward);
 
-if use_stored_Q == true && ...
+if use_stored_Q == 1 && ...
     exist(Qfile_reward,'file') == 2
     load(Qfile_reward);
 else
@@ -191,7 +196,6 @@ if ~params.training
     h = figure('Name','Simulation Window','units','normalized','position',[.1 .1 .7 .7]);
 end
 
-MSN = initializeMSN(MSN,params);  
 %Prep for eventual movie
 if take_video
     movie_frames = snapshots; %set number of frames for the movie
@@ -206,22 +210,33 @@ end
 MSN.current_run = 1;
 sample_step = 1;
 
+% set starting positions - fixed for data capture and will get randomized
+% for training
+if ~params.training 
+    startpos_file = 'start_pos_rec.mat';
+    if exist(startpos_file,'file') == 2
+        load(startpos_file);
+    else
+        startpos = randi(params.maxgrid,params.maxnodes,params.dimensions);
+        save(startpos_file,'startpos');
+    end
+    MSN.startpos = startpos;
+    Pred.pos(1,:) = [250 300 375];
+end
+
 for e = 1:episodes
     status = sprintf('STARTING NEW EPISODE %d: %s',e,datestr(now));
     disp(status)
     
-    for i = 1:training_runs   
+    for i = 1:training_runs 
+              
+        if params.training
+            MSN.startpos = randi(p.maxgrid,p.maxnodes,p.dimensions);
+            Pred.pos(1,:) = randi(params.maxgrid,3,1)*.9;
+        end
+        
         % Reset MSN
         MSN = initializeMSN(MSN,params);  
-        
-        %Reset Predator
-        Pred.pos(1,:) = [
-            randi(params.maxgrid) ...
-            randi(params.maxgrid) ...
-            randi(params.maxgrid)];
-        
-%         % Reset Qlearning (wait til predator detected)
-%         params.engage_Qlearning = false;
 
         for t = 2:params.timesteps
             %Main function: recalc MSN next position
@@ -264,54 +279,8 @@ if take_video
     close(v);
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%% PLOTS
-%%% Plot position of nodes over time
-
-if use_stored_Q; Qstring = 'True'; else Qstring = 'False'; end
-
-figure('Name','Reward');
-hold on
-switch params.reward
-    case 1
-        firstline = 'Reward #1: number of neighbors';
-        axis ([0 sample_step 0 params.maxnodes])
-    case 2
-        firstline = 'Reward #2: +10 if distance from predator is increased';
-        axis ([0 sample_step 0 10])
-    case 3
-        firstline = 'Reward #3 (Combined):number of neighbors +5 if increased distance';
-        axis ([0 sample_step 0 params.maxnodes])
-end
-secondline = sprintf('Q: %s: Average reward: %2.2f',Qstring,mean(MSN.Report_Reward(2:end)));
-title ({firstline,secondline})
-xlabel('Training Iteration')
-ylabel('Reward')
-plot(MSN.Report_Reward(2:end))
-hold off
-
-figure('Name','Number of Neighbors');
-hold on
-secondline = sprintf('Q: %s: Average neighbors: %2.2f',Qstring,mean(MSN.Report_NN(2:end)));
-title (secondline)
-axis ([0 sample_step 0 params.maxnodes])
-xlabel('Training Iteration')
-ylabel('Number of Neighbors')
-plot(MSN.Report_NN(2:end))
-hold off
-
-figure('Name','Mean Predator Distance');
-hold on
-secondline = sprintf('Q: %s: Average distance: %2.2f',Qstring,...
-    mean(MSN.Report_Mean_pred_distance(2:end)));
-title (secondline)
-axis ([0 sample_step 0 params.maxgrid])
-xlabel('Training Iteration')
-ylabel('Mean Predator Distance')
-plot(MSN.Report_Mean_pred_distance(2:end))
-hold off
+do_plots(MSN,params,sample_step,Pred,use_stored_Q);
 
 if params.training
     save(Qfile_reward,'Q');
 end
-

@@ -6,9 +6,8 @@ MSN.reward = zeros(p.timesteps, p.maxnodes);
 MSN.connectivity = zeros(p.timesteps,1);
 MSN.reward_all = zeros(p.timesteps,1);
 
-startpos = randi(p.maxgrid,p.maxnodes,p.dimensions);
 MSN.pos = zeros(p.timesteps,p.maxnodes,p.dimensions);
-MSN.pos(1,:,:) = startpos;
+MSN.pos(1,:,:) = MSN.startpos;
 
 MSN.pred_distance = zeros(p.timesteps,p.maxnodes);
 
